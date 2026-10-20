@@ -21,6 +21,8 @@
     <Compile Remove="BuildActions/PickupRotateInvokeProbe.cs" />
     <Compile Remove="BuildActions/BehaviorInvokeProbe.cs" />
     <Compile Remove="BuildActions/ManagerEntryProbe.cs" />
+    <!-- ITHM Task4: poll enter path retired (user 2026-10-20); native enter default OFF; diag restart/restart-fptr only -->
+    <Compile Remove="Hooks/PlaceModeFieldPoll.cs" />
   </ItemGroup>
 
   <ItemGroup>

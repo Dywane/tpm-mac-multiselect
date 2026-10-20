@@ -1,0 +1,52 @@
+ITHM Task1 thin IInteropHost Ready Kind=Interop cold start
+Asia/Shanghai: 2026-10-20 16:07:18
+Host version: 0.4.0
+Branch: track-a/tps-game-loaderrs
+Worktree: /Users/weidu/Documents/Project/TPM-muti-select-worktrees/track-a-tps-game-loaderrs
+Probe: TpmMacInteropProbe.dll.off (unchanged)
+SHA256 Host: 0924e92d5485a39b5bdf17ac128a64baef4a08d685cf85133c9e07345c70c9b3
+
+=== Success criteria ===
+Kind=Interop + Ready=true; Host 0.4.0; no CApi path restored
+
+=== LogOutput excerpt (HOST) ===
+176:[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+177:[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+178:[Info   :TPM Mac IL2CPP Host] [HOST] Kernel.Kind config=Interop → Interop (default=Interop)
+179:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=True HostFacade.Ready=True — OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+180:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=true
+181:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok ns=System name=String → Il2CppSystem.String handle valid; OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+182:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryInvoke op_Implicit("a10") → true (RuntimeObjectHandle)
+183:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetField isWrapped → true value=False
+184:[Info   :TPM Mac IL2CPP Host] [RT] smoke TrySetField isWrapped=False → true (idempotent rewrite)
+185:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetTypeName → true name=Il2CppSystem.String
+186:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryFindObject: NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve
+187:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryFindObject → false (NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve)
+188:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok image=TPS.Game ns=TPS.Game name=BuildMode
+227:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+228:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+230:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+231:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+233:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+234:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+236:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+237:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+238:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+239:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+240:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+241:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+243:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+244:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+245:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+246:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+247:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+248:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+249:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+250:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+251:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+252:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+253:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+254:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+256:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+257:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager
+258:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic

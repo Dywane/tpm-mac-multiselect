@@ -1,0 +1,110 @@
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.0.63f1 (9438f9b77a46)
+[Subsystems] Discovering subsystems at path /Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/TPM.app/Contents/Resources/Data/UnitySubsystems
+GfxDevice: creating device client; kGfxThreadingModeThreaded
+ preferred device: Apple M4 Pro (high power)
+Metal devices available: 1
+0: Apple M4 Pro (high power)
+Using device Apple M4 Pro (high power)
+Initializing Metal device caps: Apple M4 Pro
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Metal RecreateSurface[0x1e244ab10]: surface size 5120x2880
+UnloadTime: 0.424833 ms
+Metal: Error creating pipeline state (Two Point/Wall): Fragment input(s) `user(TEXCOORD0)` mismatching vertex shader output type(s) or not written by vertex shader
+(null)Metal: Error creating pipeline state (Hidden/TPS/Character (Mega)): Vertex attribute TEXCOORD1(4) of type int cannot be read using MTLAttributeFormatFloat2
+(null)RenderGraph is now disabled.
+Unloading 4 Unused Serialized files (Serialized files now loaded: 1353)
+UnloadTime: 0.370834 ms
+Game version 12.0.244870+2026-10-09.1642
+Active scripting defines: ENABLE_IL2CPP;NETSTANDARD;RELEASE_BUILD_TYPE;USE_STEAM;LOG_LEVEL_INFORMATION;RELEASE_BUILD;ENABLE_RELEASE_OPTIMISATION
+[Platform] Creating TPS.Core.SteamworksPlatformAccount
+[SteamworksPlatform] Steam build ID: 25838816
+ACL Unity DLL AclUnity: Version 2.1.2 Preview: True Unity Version 0.7.1 Preview: True
+Unloading 27 unused Assets to reduce memory usage. Loaded Objects now: 9592.
+Total: 18.192375 ms (FindLiveObjects: 0.373292 ms CreateObjectMapping: 0.121666 ms MarkObjects: 17.607500 ms  DeleteObjects: 0.089375 ms)
+
+[SteamworksPlatform] QueryPurchasedDLCs waiting for Auth Session Validation....
+[SteamworksPlatform] OnValidAuthTicketResponse - True.
+[SteamworksPlatform] QueryPurchasedDLCs finished waiting for auth session validation (success)
+Addressables.InitializeAsync
+Loading Fonts
+Loading Localisation Terms
+GameSettings: before wait on isInitialized
+GameSettings: after wait on isInitialized
+ActiveVideoSettings.GetVolumeStack()
+VolumeManager.instance.isInitialized = True
+ActiveVideoSettings.GetVolumeStack()
+VolumeManager.instance.isInitialized = True
+PlatformProvidesSafeFrameRatio: False
+Show Splash Screens
+Create Early Title Data
+Loading Main Scene
+Unloading 3 Unused Serialized files (Serialized files now loaded: 1388)
+UnloadTime: 0.533042 ms
+Backtrace details: GUID: c3791d5b-b7e7-5d98-9aa9-c35a5191ebcf, Session: d2eb8492-f182-4014-a66f-5da58ba55aa4
+Unloading 231 unused Assets to reduce memory usage. Loaded Objects now: 14803.
+Total: 28.628666 ms (FindLiveObjects: 0.674334 ms CreateObjectMapping: 0.178417 ms MarkObjects: 27.460167 ms  DeleteObjects: 0.315250 ms)
+
+SteamworksTextEntryHelper Initialised
+GarbageCollector disposing of ComputeBuffer. Please use ComputeBuffer.Release() or .Dispose() to manually release the buffer.
+[SteamworksPlatform] OnValidAuthTicketResponse - True.
+Beginning serialiser cache warmup
+Created formatters in 0 ms
+Finished all warmup in 364 ms
+[Platform] User logged in "online" on default platform (ID = 76561198193687006)
+Main scene load took 20.67403 seconds
+Distance Volume Format Supported: ARGBHalf (R16G16B16A16_SFloat)
+Irradiance Volume Format Supported: ARGBHalf (R16G16B16A16_SFloat)
+Avatar Load Triggered from Player Info
+Avatar Load Triggered
+QuitGame.Quit - calling QuitNow
+QuitGame.QuitNow - calling Application.Quit
+QuitGame.QuitNow - after Application.Quit
+QuitGame.Quit - QuitNow has been called
+OnApplicationQuit
+UnregisterConsoleCommands
+DemoManager
+InputDeviceFilterManager
+LevelMixerManager
+_uiScaleManager
+MusicManager
+MessageQueue
+OnlineMetadataHandler
+KeyBindingsManager
+_videoSettingsHandler
+OutOfLevelMusicManager
+_audioManager
+_audioMixerManager
+_characterMeshCombiner
+SeasonalThemeManager
+NewsManager
+OnlineManager
+CommunityUnlockablesManager
+UnlockablesManager
+ConsumableRewardsManager
+_metagameScenesManager
+_mipmapVisualisationManager
+_lightingManager
+_saveSystem
+base.OnApplicationQuit
+AssetBundle.Unload was called while the asset bundle had an async load operation in progress. The main thread will wait for the async load operation to complete.
+AssetBundle.Unload could not complete because the asset bundle still has an async load operation in progress.
+AssetBundle.Unload was called while the asset bundle had an async load operation in progress. The main thread will wait for the async load operation to complete.
+AssetBundle.Unload could not complete because the asset bundle still has an async load operation in progress.
+AssetBundle.Unload was called while the asset bundle had an async load operation in progress. The main thread will wait for the async load operation to complete.
+AssetBundle.Unload could not complete because the asset bundle still has an async load operation in progress.
+App is null! This shouldn't happen. Please check the callstack and see where this is coming from.
+App is null! This shouldn't happen. Please check the callstack and see where this is coming from.
+[Physics::Module] Cleanup current backned.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+Deallocated serialized file cache memory but there are still active readers. This can occur when there are Assetbundles that are still loaded.

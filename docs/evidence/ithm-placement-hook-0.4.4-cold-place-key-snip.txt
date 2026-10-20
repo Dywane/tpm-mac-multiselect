@@ -1,0 +1,45 @@
+# Key snip from LogOutput cold place MS 0.4.4 / Host 0.4.0 — 2026-10-20 16:43 Asia/Shanghai
+# Source: ithm-placement-hook-0.4.4-cold-place-LogOutput-20261020-164328.log (407 lines; poll stopped ~22/300)
+
+176:[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+177:[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+182:[Info   :TPM Mac IL2CPP Host] [HOST][harmony] smoke ok
+191:[Info   :   BepInEx] Loading [TPM Mac Multi-Select 0.4.4]
+192:[Info   :TPM Mac Multi-Select] TPM Mac Multi-Select 0.4.4 loaded (ithm: Il2Cpp* + Host.Harmony + PlacementReadyHook + place-field-poll)
+194:[Info   :TPM Mac Multi-Select] [MS] host ready / Kind=Interop / SharedHarmony acquired
+203:[Warning:TPM Mac Multi-Select] [MS][hook] SKIP managed Harmony CursorModePlaceItem.OnBecomeActive — stub method missing (declaredMethods=0, NativeMethodInfoPtr*=0; empty interleaved stub). NativeDetour also banned for this name (0.4.2 crash).
+204:[Info   :TPM Mac Multi-Select] [MS][hook] enter-like seen CursorModePlaceItem.OnBecomeActive fn=0x12A50DC12 (whitelist OK; nativeDetourBanned=True)
+205:[Warning:TPM Mac Multi-Select] [MS][hook] SKIP NativeDetour CursorModePlaceItem.OnBecomeActive — banned after MS 0.4.2 crash (ZeroArgInstance/ABI unproven; do not re-apply). PLACEMENT_READY may stay MISS until safe enter signal.
+206:[Warning:TPM Mac Multi-Select] [MS][hook] no safe NativeDetour candidates on CursorModePlaceItem after ban filter; relying on managed ctor patch / future hook (RestartItemPlaceState / rotate field path). PLACEMENT_READY expected MISS until next safe enter signal.
+207:[Info   :TPM Mac Multi-Select] [MS] PlacementReadyHook.Apply done (ctor/whitelist; NativeDetour OnBecomeActive banned)
+208:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll STARTED (bounded; Find SKIPPED; no Invoke; signal=cm._mode PLACE_BY_TYPENAME → PLACEMENT_READY; await user enter place)
+210:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll 1/300 (sawCm=False; scanning VC/CM → _mode typeName)
+218:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+227:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+236:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+245:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+254:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+263:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+272:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+281:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+290:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+299:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+308:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+317:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+326:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+335:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+344:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+353:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+362:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+371:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+380:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+389:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+398:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+399:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll 22/300 (sawCm=False; scanning VC/CM → _mode typeName)
+407:[Info   :TPM Mac Multi-Select] [MS][hook] place-field-poll VC.Instance null (need level?)
+
+# Counts
+PLACEMENT_READY count: 0
+sawCm=True count: 0
+MissingMethod count: 0
+place-field-poll ticks logged: 22

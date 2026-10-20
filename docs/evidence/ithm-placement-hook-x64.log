@@ -1,0 +1,81 @@
+# ITHM Task4 — placement hook cold evidence (MISS / BLOCKED)
+# Captured: 2026-10-20 16:26:48 CST (Asia/Shanghai)
+# Source: BepInEx/LogOutput.log mtime=2026-10-20 16:24:08 CST
+# Host DLL: plugins/TpmMacIl2CppHost.dll (0.4.0)
+# MS DLL:   plugins/TpmMacMultiselect.dll (0.4.1)
+#
+# RESULT: BLOCKED — no line matching '[MS][hook] PLACEMENT_READY via='
+# Note: substring 'await PLACEMENT_READY' appears once in Apply-done banner only.
+#
+# Root cause (code):
+# 1) IsEnterLikeName exact whitelist has 'BecomeActive' but runtime method is 'OnBecomeActive'
+#    → TryDetourEnterLike candidates=0 → 'relying on ctor patch'
+# 2) Managed Harmony on CursorModePlaceItem..ctor(IntPtr) does not fire on native enter-place
+#    (no managed IntPtr wrap observed in this session).
+# 3) No MissingMethodException / op_Equality in this LogOutput.
+# 4) Game process not running at capture; last DiagnosticReports crash 15:35 (prior session).
+
+## Key excerpt (Host + MS load through Chainloader complete)
+```
+176:[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+177:[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+179:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=True HostFacade.Ready=True — OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+180:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=true
+181:[Info   :TPM Mac IL2CPP Host] [HOST] SharedHarmony id=com.tpm.mac.il2cpp-host.shared Ready=True
+182:[Info   :TPM Mac IL2CPP Host] [HOST][harmony] smoke ok
+191:[Info   :   BepInEx] Loading [TPM Mac Multi-Select 0.4.1]
+192:[Info   :TPM Mac Multi-Select] TPM Mac Multi-Select 0.4.1 loaded (ithm: direct Il2Cpp* + Host.Harmony + PlacementReadyHook)
+193:[Info   :TPM Mac Multi-Select] [MS] archived poll disabled
+194:[Info   :TPM Mac Multi-Select] [MS] host ready / Kind=Interop / SharedHarmony acquired
+195:[Info   :TPM Mac Multi-Select] [MS][bridge] Il2Cpp* types bound: CursorManager=TPS.Game.CursorManager, PlaceItem=TPS.Game.CursorModePlaceItem, BuildLogic=TPS.Game.BuildLogic, Il2CppObject=Il2CppSystem.Object, UnityObject=UnityEngine.Object
+197:[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 118 methods on TPS.Game.CursorModePlaceItem
+198:[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 89 methods on TPS.Game.CursorManager
+199:[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 139 methods on TPS.Game.BuildLogic
+200:[Info   :TPM Mac Multi-Select] [MS][hook] wrote target evidence → /Users/weidu/Documents/Project/TPM-muti-select-worktrees/track-a-tps-game-loaderrs/docs/evidence/ithm-placement-hook-target.md
+201:[Info   :TPM Mac Multi-Select] [MS][hook] patched CursorModePlaceItem..ctor(IntPtr) (managed; Il2Cpp resolver detached)
+202:[Warning:TPM Mac Multi-Select] [MS][hook] no 0-arg enter-like instance methods on CursorModePlaceItem; relying on ctor patch
+203:[Info   :TPM Mac Multi-Select] [MS] PlacementReadyHook.Apply done (await PLACEMENT_READY on enter-place)
+204:[Message:   BepInEx] Chainloader startup complete
+```
+
+## Full Host+MS block (raw)
+```
+[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+[Info   :TPM Mac IL2CPP Host] [HOST] Kernel.Kind config=Interop → Interop (default=Interop)
+[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=True HostFacade.Ready=True — OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=true
+[Info   :TPM Mac IL2CPP Host] [HOST] SharedHarmony id=com.tpm.mac.il2cpp-host.shared Ready=True
+[Info   :TPM Mac IL2CPP Host] [HOST][harmony] smoke ok
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok ns=System name=String → Il2CppSystem.String handle valid; OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryInvoke op_Implicit("a10") → true (RuntimeObjectHandle)
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetField isWrapped → true value=False
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TrySetField isWrapped=False → true (idempotent rewrite)
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetTypeName → true name=Il2CppSystem.String
+[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryFindObject: NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryFindObject → false (NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve)
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok image=TPS.Game ns=TPS.Game name=BuildMode
+[Info   :   BepInEx] Loading [TPM Mac Multi-Select 0.4.1]
+[Info   :TPM Mac Multi-Select] TPM Mac Multi-Select 0.4.1 loaded (ithm: direct Il2Cpp* + Host.Harmony + PlacementReadyHook)
+[Info   :TPM Mac Multi-Select] [MS] archived poll disabled
+[Info   :TPM Mac Multi-Select] [MS] host ready / Kind=Interop / SharedHarmony acquired
+[Info   :TPM Mac Multi-Select] [MS][bridge] Il2Cpp* types bound: CursorManager=TPS.Game.CursorManager, PlaceItem=TPS.Game.CursorModePlaceItem, BuildLogic=TPS.Game.BuildLogic, Il2CppObject=Il2CppSystem.Object, UnityObject=UnityEngine.Object
+[Info   :TPM Mac Multi-Select] [MS] Il2CppItemSelectionBridge constructed (skeleton; Task5–8 pending)
+[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 118 methods on TPS.Game.CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 89 methods on TPS.Game.CursorManager
+[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 139 methods on TPS.Game.BuildLogic
+[Info   :TPM Mac Multi-Select] [MS][hook] wrote target evidence → /Users/weidu/Documents/Project/TPM-muti-select-worktrees/track-a-tps-game-loaderrs/docs/evidence/ithm-placement-hook-target.md
+[Info   :TPM Mac Multi-Select] [MS][hook] patched CursorModePlaceItem..ctor(IntPtr) (managed; Il2Cpp resolver detached)
+[Warning:TPM Mac Multi-Select] [MS][hook] no 0-arg enter-like instance methods on CursorModePlaceItem; relying on ctor patch
+[Info   :TPM Mac Multi-Select] [MS] PlacementReadyHook.Apply done (await PLACEMENT_READY on enter-place)
+[Message:   BepInEx] Chainloader startup complete
+```
+
+# =============================================================================
+# FOLLOW-UP 2026-10-20 16:31 Asia/Shanghai — MS 0.4.2 CRASH
+# =============================================================================
+# MS 0.4.2 + Host 0.4.0 cold start: NativeDetour OnBecomeActive applied;
+# user exit/crash on enter; no PLACEMENT_READY; no new .ips.
+# Full write-up: docs/evidence/ithm-placement-hook-0.4.2-crash.md
+# Emergency rollback: game DLL restored to 0.4.1 bak (hash 02e6653d…).
+# RESULT: CRASH / rolled back — Task4 still BLOCKED; do not open Task5.

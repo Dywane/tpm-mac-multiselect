@@ -14,8 +14,8 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    /// <summary>ITHM Task4: PlacementReadyHook — ban OnBecomeActive NativeDetour (0.4.2 crash); managed Harmony skip if stub empty.</summary>
-    public const string PluginVersion = "0.4.3";
+    /// <summary>ITHM Task4: native enter default OFF. N1a restart + OnBecomeActive diag REFUSED (hang/crash FAIL). No poll.</summary>
+    public const string PluginVersion = "0.4.9";
 
     internal static ManualLogSource LogSrc = null!;
 
@@ -26,9 +26,9 @@ public class Plugin : BasePlugin
     public override void Load()
     {
         LogSrc = Log;
-        Log.LogInfo($"{PluginName} {PluginVersion} loaded (ithm: direct Il2Cpp* + Host.Harmony + PlacementReadyHook)");
+        Log.LogInfo($"{PluginName} {PluginVersion} loaded (ithm: Il2Cpp* + Host.Harmony + PlacementReadyHook; poll enter path retired; native enter default OFF)");
 
-        Log.LogInfo("[MS] archived poll disabled");
+        Log.LogInfo("[MS] archived WAITING_LEVEL + PlaceModeFieldPoll not started (user: no poll); native enter detour default OFF (N1a restart + OnBecomeActive diag REFUSED after hang/crash)");
 
         var host = HostFacade.Host;
         if (host is null || !host.Ready)
@@ -59,11 +59,13 @@ public class Plugin : BasePlugin
         try
         {
             PlacementReadyHook.Apply(harmony);
-            Log.LogInfo("[MS] PlacementReadyHook.Apply done (await PLACEMENT_READY on enter-place)");
+            Log.LogInfo("[MS] PlacementReadyHook.Apply done (ctor/whitelist; native default OFF; set TPM_MS_DIAG_PLACEMENT=restart for N1a)");
         }
         catch (Exception ex)
         {
             Log.LogError($"[MS] PlacementReadyHook.Apply failed: {ex.GetType().Name}: {ex.Message}");
         }
+
+        // PlaceModeFieldPoll not started — user hard constraint 2026-10-20 (no poll enter path).
     }
 }

@@ -1,0 +1,31 @@
+ITHM Task2 shared Harmony + smoke patch cold start
+Asia/Shanghai: 2026-10-20 16:12:08
+Host version: 0.4.0
+Branch: track-a/tps-game-loaderrs
+Worktree: /Users/weidu/Documents/Project/TPM-muti-select-worktrees/track-a-tps-game-loaderrs
+Probe: TpmMacInteropProbe.dll.off (unchanged)
+SHA256 Host: b53d470f731394f189b89b31886e84cafb9f73d408b1af4300f8bab81744b568
+
+=== Success criteria ===
+SharedHarmony non-null; log contains [HOST][harmony] smoke ok
+Note: Il2CppHarmonySupportGate temporarily detaches Il2Cpp ResolvePatcher around managed smoke
+because Il2CppSystem.Type.op_Equality is missing (MissingMethodException on null-check).
+
+=== LogOutput excerpt (HOST / harmony) ===
+176:[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+177:[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+178:[Info   :TPM Mac IL2CPP Host] [HOST] Kernel.Kind config=Interop → Interop (default=Interop)
+179:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=True HostFacade.Ready=True — OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+180:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=true
+181:[Info   :TPM Mac IL2CPP Host] [HOST] SharedHarmony id=com.tpm.mac.il2cpp-host.shared Ready=True
+182:[Info   :TPM Mac IL2CPP Host] [HOST][harmony] smoke ok
+183:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok ns=System name=String → Il2CppSystem.String handle valid; OK Il2CppSystem.String fields=2 methods=2 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+184:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryInvoke op_Implicit("a10") → true (RuntimeObjectHandle)
+185:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetField isWrapped → true value=False
+186:[Info   :TPM Mac IL2CPP Host] [RT] smoke TrySetField isWrapped=False → true (idempotent rewrite)
+187:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetTypeName → true name=Il2CppSystem.String
+188:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryFindObject: NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve
+189:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryFindObject → false (NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve)
+190:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok image=TPS.Game ns=TPS.Game name=BuildMode
+229:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.BuildLogic
+230:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryGetField: field not found name=<Instance>k__BackingField type=TPS.Game.CursorManager

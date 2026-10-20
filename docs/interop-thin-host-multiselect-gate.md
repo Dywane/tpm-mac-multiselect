@@ -74,19 +74,22 @@
 
 ---
 
-## Task 4 — PlacementReadyHook（CODE PASS / cold evidence **BLOCKED**；MS **0.4.3** ban NativeDetour）
+## Task 4 — PlacementReadyHook（CODE+DEPLOY MS **0.4.6** formal fptr ON；cold place evidence **PENDING**；§4.5 **不勾**）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 目标钉名 | PlaceItem `.ctor(IntPtr)` + runtime enter-like (log only) | `docs/evidence/ithm-placement-hook-target.md` |
-| Apply | SharedHarmony + Detach; **no** OnBecomeActive NativeDetour | `Hooks/PlacementReadyHook.cs` |
-| 白名单 | exact `OnBecomeActive` + `On*BecomeActive` 仍识别 | `IsEnterLikeName`（日志可见） |
-| NativeDetour | **BANNED** for BecomeActive/Activate family after 0.4.2 crash | `IsNativeDetourBanned`；evidence `ithm-placement-hook-0.4.3-ban-nativedetour.md` |
+| 目标钉名 | PlaceItem `.ctor(IntPtr)` + native `OnBecomeActive` | `docs/evidence/ithm-placement-hook-target.md` |
+| Crash root cause | 0.4.2 used `NativeDetour(IntPtr, Delegate)` → `GetNativeStart` (JIT) | `ithm-onbecomeactive-crash-rootcause.md` |
+| Formal NativeDetour | `GetFunctionPointerForDelegate` + `NativeDetour(IntPtr, IntPtr)`; trampoline-first | `Hooks/PlacementReadyHook.cs` @ 0.4.6 |
+| Default | **ON** (not diag-only) | PluginVersion 0.4.6 |
+| Contrast | `TPM_MS_DIAG_PLACEMENT=off` skips Detour | same |
+| Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart path | never fall back |
+| Poll | PlaceModeFieldPoll **Compile Remove** (user: no poll) | csproj |
 | Managed Harmony | try `OnBecomeActive` → stub missing → SKIP | empty interleaved TPS.Game |
-| 日志 | boot: `SKIP NativeDetour …OnBecomeActive`；`PLACEMENT_READY` 可能仍 MISS | 用户冷启摘录待补 |
-| 版本 | Multiselect **0.4.3**（Host 保持 **0.4.0**） | PluginVersion；plugins 仅换 MS DLL |
+| 冷启放置摘录 | **PENDING** user：冷启→进放置→`PLACEMENT_READY via=…(fptr)` | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` |
+| 版本 | Multiselect **0.4.6**（Host **0.4.0**） | PluginVersion；plugins 仅换 MS DLL |
 
-**判据：** 规格 §4.5 — **不勾**。0.4.2 crash 后 MS **0.4.3** 显式跳过 OnBecomeActive NativeDetour；托管 stub 无方法可补。**PLACEMENT_READY 仍 BLOCKED**（无安全 enter 信号）。下一 hook 建议：`RestartItemPlaceState` / `_rotateControl` 字段路径 / 已证实安全的 0-arg——**勿盲挂同样 NativeDetour**；**勿开 Task5**。
+**判据：** 规格 §4.5 — **仍不勾**（等用户放置取证）。0.4.5 为 diag-only fptr；0.4.6 正式默认开启同一安全 API。若进放置仍硬崩 → H1 不足（Rosetta/ABI），停并写清，**勿**重挂 Delegate 重载；**勿开 Task5**。
 
 ---
 
