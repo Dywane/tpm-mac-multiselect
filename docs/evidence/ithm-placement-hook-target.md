@@ -1,6 +1,6 @@
 # ITHM Task4 — placement hook target
 
-Generated: 2026-10-20 18:23:17 Asia/Shanghai (box-local)
+Generated: 2026-10-20 18:39:52 Asia/Shanghai (box-local)
 
 | 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |
 |------|--------|------------|------|----------|
