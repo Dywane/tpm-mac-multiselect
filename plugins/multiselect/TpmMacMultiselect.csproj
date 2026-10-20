@@ -73,6 +73,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../mac-il2cpp-host/TpmMacIl2CppHost.csproj" />
+    <!-- Split-repo: Host lives in tpm-mac-loader (sibling under Documents/Project). -->
+    <ProjectReference Include="../../../tpm-mac-loader/plugins/mac-il2cpp-host/TpmMacIl2CppHost.csproj" />
   </ItemGroup>
 </Project>

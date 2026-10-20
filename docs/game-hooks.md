@@ -1,6 +1,6 @@
 # game-hooks（TPM Mac 多选）
 
-> **ITHM Task4（2026-10-20）：** `PlacementReadyHook` MS **0.4.3** — managed `.ctor(IntPtr)` only; **ban** OnBecomeActive NativeDetour (0.4.2 crash); evidence `docs/evidence/ithm-placement-hook-0.4.3-ban-nativedetour.md`. PRM WAITING_LEVEL 仍冻结。
+> **ITHM Task4（2026-10-20）：** `PlacementReadyHook` MS **0.4.10** — primary **managed Harmony** when stub MethodInfo exists; else **WAITING_FOR_STUB_METHODINFO**; native detour default OFF; poll retired. Evidence `docs/evidence/ithm-managed-harmony-await-stub.md`. Task5 不开。PRM WAITING_LEVEL 仍冻结。
 > **本刀权威路径（2026-10-20 Asia/Shanghai）：** Interop 瘦 Host + Multiselect **直绑** `Il2Cpp*` — 见 `docs/plans/tpm-mac-interop-thin-host-multiselect-plan.md` / 门禁 `docs/interop-thin-host-multiselect-gate.md`。  
 > **冻结：** 旧 PRM（`tpm-mac-plugin-runtime-multiselect`）/ `IRuntimeBridge` 玩法门面 / CAPI / `WAITING_LEVEL` 盲轮询 **不作本刀验收**。下文 PRM 段仅作史实归档。
 

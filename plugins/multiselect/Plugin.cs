@@ -14,8 +14,11 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    /// <summary>ITHM Task4: native enter default OFF. N1a restart + OnBecomeActive diag REFUSED (hang/crash FAIL). No poll.</summary>
-    public const string PluginVersion = "0.4.9";
+    /// <summary>
+    /// ITHM Task4: managed Harmony enter when stub MethodInfo exists; else WAITING_FOR_STUB_METHODINFO.
+    /// Native detour default OFF / refused. Poll not used. Task5 not opened.
+    /// </summary>
+    public const string PluginVersion = "0.4.10";
 
     internal static ManualLogSource LogSrc = null!;
 
@@ -26,9 +29,13 @@ public class Plugin : BasePlugin
     public override void Load()
     {
         LogSrc = Log;
-        Log.LogInfo($"{PluginName} {PluginVersion} loaded (ithm: Il2Cpp* + Host.Harmony + PlacementReadyHook; poll enter path retired; native enter default OFF)");
+        Log.LogInfo(
+            $"{PluginName} {PluginVersion} loaded " +
+            "(ithm: managed-Harmony-await-stub; native enter default OFF; poll retired; Task5 closed)");
 
-        Log.LogInfo("[MS] archived WAITING_LEVEL + PlaceModeFieldPoll not started (user: no poll); native enter detour default OFF (N1a restart + OnBecomeActive diag REFUSED after hang/crash)");
+        Log.LogInfo(
+            "[MS] PlaceModeFieldPoll not started (user: no poll); " +
+            "native enter detour default OFF; primary = managed Harmony when Interop stub MethodInfo exists");
 
         var host = HostFacade.Host;
         if (host is null || !host.Ready)
@@ -59,13 +66,13 @@ public class Plugin : BasePlugin
         try
         {
             PlacementReadyHook.Apply(harmony);
-            Log.LogInfo("[MS] PlacementReadyHook.Apply done (ctor/whitelist; native default OFF; set TPM_MS_DIAG_PLACEMENT=restart for N1a)");
+            Log.LogInfo(
+                "[MS] PlacementReadyHook.Apply done " +
+                $"(managedEnterPatched={PlacementReadyHook.ManagedEnterPatched}; native default OFF)");
         }
         catch (Exception ex)
         {
             Log.LogError($"[MS] PlacementReadyHook.Apply failed: {ex.GetType().Name}: {ex.Message}");
         }
-
-        // PlaceModeFieldPoll not started — user hard constraint 2026-10-20 (no poll enter path).
     }
 }
