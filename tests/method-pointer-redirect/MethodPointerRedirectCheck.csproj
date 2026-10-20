@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TpmMacMultiselect.Hooks</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../plugins/multiselect/Hooks/MethodPointerRedirect.cs" />
+  </ItemGroup>
+</Project>

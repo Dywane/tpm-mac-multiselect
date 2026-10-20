@@ -85,7 +85,7 @@
 | Contrast | `TPM_MS_DIAG_PLACEMENT=off` skips Detour | same |
 | Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart path | never fall back |
 | Poll | PlaceModeFieldPoll **Compile Remove** (user: no poll) | csproj |
-| Managed Harmony | 0.4.10: try enter candidates → stub missing → **WAITING_FOR_STUB_METHODINFO**; patch Prefix+Postfix when MethodInfo non-null; native default OFF | empty interleaved TPS.Game (Interop owes stub) |
+| Enter arm | **0.4.11:** `OnBecomeActive` method-pointer + matching vtable slot. Do not `Harmony.Patch` that method (HarmonySupport → Dobby Preparing hard-aborts). Prologue rewrite OFF. Poll retired. | `docs/evidence/ithm-0.4.11-methodpointer-enter.md` |
 | 冷启放置摘录 | **PENDING** user：冷启→进放置→`PLACEMENT_READY via=…(fptr)` | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` |
 | 版本 | Multiselect **0.4.6**（Host **0.4.0**） | PluginVersion；plugins 仅换 MS DLL |
 

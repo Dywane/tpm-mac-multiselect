@@ -14,15 +14,9 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    /// <summary>
-    /// ITHM Task4: managed Harmony enter when stub MethodInfo exists; else WAITING_FOR_STUB_METHODINFO.
-    /// Native detour default OFF / refused. Poll not used. Task5 not opened.
-    /// </summary>
-    public const string PluginVersion = "0.4.10";
+    public const string PluginVersion = "0.4.11";
 
     internal static ManualLogSource LogSrc = null!;
-
-    internal static HarmonyLib.Harmony? SharedHarmony { get; private set; }
 
     internal static IItemSelectionBridge? Bridge { get; private set; }
 
@@ -31,11 +25,11 @@ public class Plugin : BasePlugin
         LogSrc = Log;
         Log.LogInfo(
             $"{PluginName} {PluginVersion} loaded " +
-            "(ithm: managed-Harmony-await-stub; native enter default OFF; poll retired; Task5 closed)");
+            "(ithm: method-pointer enter; prologue rewrite OFF; poll retired; Task5 closed)");
 
         Log.LogInfo(
             "[MS] PlaceModeFieldPoll not started (user: no poll); " +
-            "native enter detour default OFF; primary = managed Harmony when Interop stub MethodInfo exists");
+            "GameAssembly prologue rewrite OFF; primary = OnBecomeActive method-pointer swap");
 
         var host = HostFacade.Host;
         if (host is null || !host.Ready)
@@ -50,14 +44,12 @@ public class Plugin : BasePlugin
             return;
         }
 
-        var harmony = host.SharedHarmony;
-        if (harmony is null)
+        if (host.SharedHarmony is null)
         {
             Log.LogError("[MS] SharedHarmony null while Ready; gameplay disabled (safe fail)");
             return;
         }
 
-        SharedHarmony = harmony;
         Log.LogInfo("[MS] host ready / Kind=Interop / SharedHarmony acquired");
 
         Bridge = new Il2CppItemSelectionBridge(Log);
@@ -65,10 +57,10 @@ public class Plugin : BasePlugin
 
         try
         {
-            PlacementReadyHook.Apply(harmony);
+            PlacementReadyHook.Apply();
             Log.LogInfo(
                 "[MS] PlacementReadyHook.Apply done " +
-                $"(managedEnterPatched={PlacementReadyHook.ManagedEnterPatched}; native default OFF)");
+                $"(enterArmed={PlacementReadyHook.EnterArmed}; prologue rewrite OFF)");
         }
         catch (Exception ex)
         {
