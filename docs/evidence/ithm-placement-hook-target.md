@@ -1,13 +1,13 @@
 # ITHM Task4 — placement hook target
 
-Generated: 2026-10-20 17:36:48 Asia/Shanghai (box-local)
+Generated: 2026-10-20 18:23:17 Asia/Shanghai (box-local)
 
 | 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |
 |------|--------|------------|------|----------|
-| enter place (managed) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | .ctor(IntPtr) | Stub has no NativeMethodInfoPtr; managed wrapper ctor is patchable with Il2CppHarmonySupportGate Detach |
-| enter place (native N1a) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | RestartItemPlaceState | **Next knife** (default OFF). RVA 0x194D8D1 len=1121; argc=0 instance; ZeroArgInstance. Env: TPM_MS_DIAG_PLACEMENT=restart (Dobby) or =restart-fptr. See ithm-restartitemplacestate-next.md |
-| enter place (native) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive | **DEPRECATED diag** — 0.4.2/0.4.6/dobby all FAIL. Never default ON. Env dobby|fptr refused. |
-| enter place (poll) | — | — | — | **Retired as enter path** (user 2026-10-20: no poll) |
+| enter place (managed PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState / … | Harmony Prefix+Postfix **when** stub MethodInfo non-null; else WAITING_FOR_STUB_METHODINFO |
+| enter place (managed wrapper) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | .ctor(IntPtr) | Always patchable; fires on wrapper birth — not reliable place-enter |
+| enter place (native) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | **DEFAULT OFF / REFUSED** — crash/hang series. Never default ON. |
+| enter place (poll) | — | — | — | **Retired** (user 2026-10-20: no poll) |
 
 ## Runtime method enumeration (sample)
 
