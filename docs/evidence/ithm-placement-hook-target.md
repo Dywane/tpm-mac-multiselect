@@ -2,6 +2,8 @@
 
 Generated: 2026-10-20 19:06:48 Asia/Shanghai (box-local)
 
+**Current PRIMARY (MS 0.4.11):** methodPointer swap on `TPS.Game.CursorModePlaceItem.OnBecomeActive` (+ matching vtable slot). Prologue rewrite / Harmony.Patch OnBecomeActive OFF. Cold-start PASS: `docs/evidence/ithm-0.4.11-methodpointer-smoke.md` (`8c5a6db`). Placement / `PLACEMENT_READY` still PENDING.
+
 | 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |
 |------|--------|------------|------|----------|
 | enter place (PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive | MethodInfo.methodPointer swap, plus vtable slot when that slot still holds the same pointer. No GameAssembly prologue rewrite. |

@@ -74,22 +74,19 @@
 
 ---
 
-## Task 4 — PlacementReadyHook（CODE+DEPLOY MS **0.4.6** formal fptr ON；cold place evidence **PENDING**；§4.5 **不勾**）
+## Task 4 — PlacementReadyHook（MS **0.4.11** methodPointer swap 冷启 **PASS**；放置摘录 **PENDING**；§4.5 **不勾**）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 目标钉名 | PlaceItem `.ctor(IntPtr)` + native `OnBecomeActive` | `docs/evidence/ithm-placement-hook-target.md` |
-| Crash root cause | 0.4.2 used `NativeDetour(IntPtr, Delegate)` → `GetNativeStart` (JIT) | `ithm-onbecomeactive-crash-rootcause.md` |
-| Formal NativeDetour | `GetFunctionPointerForDelegate` + `NativeDetour(IntPtr, IntPtr)`; trampoline-first | `Hooks/PlacementReadyHook.cs` @ 0.4.6 |
-| Default | **ON** (not diag-only) | PluginVersion 0.4.6 |
-| Contrast | `TPM_MS_DIAG_PLACEMENT=off` skips Detour | same |
-| Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart path | never fall back |
-| Poll | PlaceModeFieldPoll **Compile Remove** (user: no poll) | csproj |
-| Enter arm | **0.4.11:** `OnBecomeActive` method-pointer + matching vtable slot. Do not `Harmony.Patch` that method (HarmonySupport → Dobby Preparing hard-aborts). Prologue rewrite OFF. Poll retired. | `docs/evidence/ithm-0.4.11-methodpointer-enter.md` |
-| 冷启放置摘录 | **PENDING** user：冷启→进放置→`PLACEMENT_READY via=…(fptr)` | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` |
-| 版本 | Multiselect **0.4.6**（Host **0.4.0**） | PluginVersion；plugins 仅换 MS DLL |
+| 目标钉名 | PRIMARY = `CursorModePlaceItem.OnBecomeActive` methodPointer swap | `docs/evidence/ithm-placement-hook-target.md` |
+| Enter arm | **0.4.11 methodPointer swap 冷启 PASS** — `enterArmed=True`；`WAITING_FOR_STUB_METHODINFO` **已过**；prologue rewrite / `Harmony.Patch` OnBecomeActive **OFF**（HarmonySupport→Dobby 硬退） | `docs/evidence/ithm-0.4.11-methodpointer-smoke.md`（commit `8c5a6db`） |
+| Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart；enter 侧 Dobby/Abs64 prologue | never fall back |
+| Poll | PlaceModeFieldPoll **Compile Remove**（user: no poll） | csproj |
+| 冷启放置摘录 | **仍 PENDING** — 需进放置 → `PLACEMENT_READY via=…(methodPointer swap)` | （待用户放置取证） |
+| 版本 | Multiselect **0.4.11** / Host **0.4.0** | PluginVersion；plugins 仅换 MS DLL |
+| 历史 | 0.4.5 diag-only fptr → 0.4.6 formal fptr ON 曾为主路径；现已让位 methodPointer swap | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` 等 |
 
-**判据：** 规格 §4.5 — **仍不勾**（等用户放置取证）。0.4.5 为 diag-only fptr；0.4.6 正式默认开启同一安全 API。若进放置仍硬崩 → H1 不足（Rosetta/ABI），停并写清，**勿**重挂 Delegate 重载；**勿开 Task5**。
+**判据：** 规格 §4.5 — **仍不勾**（等放置摘录）。冷启冒烟已过；**勿开 Task5** 直到出现 `PLACEMENT_READY via=…(methodPointer swap)`。进放置若仍硬崩 → 停并写清，**勿**重挂 Harmony.Patch / Delegate NativeDetour。
 
 ---
 
