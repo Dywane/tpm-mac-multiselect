@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>TpmMacMultiselect</AssemblyName>
+    <RootNamespace>TpmMacMultiselect</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin/$(Configuration)/</OutputPath>
+    <TpmGameRoot Condition="'$(TpmGameRoot)' == ''">$(TPM_GAME_ROOT)</TpmGameRoot>
+    <TpmGameRoot Condition="'$(TpmGameRoot)' == ''">$(HOME)/Library/Application Support/Steam/steamapps/common/Two Point Museum</TpmGameRoot>
+    <BepInExCore>$(TpmGameRoot)/BepInEx/core</BepInExCore>
+    <BepInExInterop>$(TpmGameRoot)/BepInEx/interop</BepInExInterop>
+  </PropertyGroup>
+
+  <!-- ITHM Task3: archive CAPI / IRuntimeBridge gameplay probes (no compile). -->
+  <ItemGroup>
+    <Compile Remove="BuildActions/RuntimeBackedItemSelectionBridge.cs" />
+    <Compile Remove="BuildActions/RuntimeTypeResolveProbe.cs" />
+    <Compile Remove="BuildActions/PickupRotateInvokeProbe.cs" />
+    <Compile Remove="BuildActions/BehaviorInvokeProbe.cs" />
+    <Compile Remove="BuildActions/ManagerEntryProbe.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(BepInExCore)/BepInEx.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(BepInExCore)/BepInEx.Unity.IL2CPP.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.Common">
+      <HintPath>$(BepInExCore)/BepInEx.Unity.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExCore)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(BepInExCore)/Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(BepInExCore)/Il2CppInterop.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>$(BepInExCore)/MonoMod.RuntimeDetour.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>$(BepInExCore)/MonoMod.Utils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- ITHM Task3: compile-time direct bind to generated Il2Cpp* assemblies -->
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(BepInExInterop)/Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TPS.Game">
+      <HintPath>$(BepInExInterop)/TPS.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(BepInExInterop)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../mac-il2cpp-host/TpmMacIl2CppHost.csproj" />
+  </ItemGroup>
+</Project>

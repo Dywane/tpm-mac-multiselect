@@ -1,0 +1,14 @@
+# BepInEx download cache (large; re-fetched by install-loader.sh)
+loader/.cache/
+# Build / IDE
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+.DS_Store
+# Game binaries must never land here
+GameAssembly.*
+**/global-metadata.dat
+plugins/**/bin/
+plugins/**/obj/
