@@ -1,13 +1,12 @@
 # ITHM Task4 — placement hook target
 
-Generated: 2026-10-20 18:39:52 Asia/Shanghai (box-local)
+Generated: 2026-10-20 19:06:48 Asia/Shanghai (box-local)
 
 | 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |
 |------|--------|------------|------|----------|
-| enter place (managed PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState / … | Harmony Prefix+Postfix **when** stub MethodInfo non-null; else WAITING_FOR_STUB_METHODINFO |
-| enter place (managed wrapper) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | .ctor(IntPtr) | Always patchable; fires on wrapper birth — not reliable place-enter |
-| enter place (native) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | **DEFAULT OFF / REFUSED** — crash/hang series. Never default ON. |
-| enter place (poll) | — | — | — | **Retired** (user 2026-10-20: no poll) |
+| enter place (PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive | MethodInfo.methodPointer swap, plus vtable slot when that slot still holds the same pointer. No GameAssembly prologue rewrite. |
+| enter place (native prologue) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | OFF. Dobby and Abs64 both failed this gate. |
+| enter place (poll) | — | — | — | Retired (user 2026-10-20: no poll) |
 
 ## Runtime method enumeration (sample)
 
