@@ -37,6 +37,19 @@ The selectable is the single argument of static `BuildLogic.OnCursorHoverStart` 
 
 `ESCursorSelectResult`, `ECCursorSelectable`, and `ECHeldOnCursor` still have no verified field name. This read does not guess one. `WorldCursorState` focus is not read. `<Item>k__BackingField` is not read.
 
+A cold start, place, and hover that reaches a selectable should contain:
+
+```
+[Info   :   BepInEx] Loading [TPM Mac Multi-Select 0.4.15]
+[Info   :TPM Mac Multi-Select] TPM Mac Multi-Select 0.4.15 loaded (ithm: method-pointer enter; hover reads BuildLogic.OnCursorHoverStart after PLACEMENT_READY; OnUpdate swap kept; prologue rewrite OFF; poll retired)
+[Info   :TPM Mac Multi-Select] [MS][hook] PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)
+[Info   :TPM Mac Multi-Select] [MS][hover] sample armed via=CursorManager.OnUpdate (methodPointer swap; vtableSlot=True; virtualMethodPointer=True; slot=6; flags=0x01E6; swap kept after PLACEMENT_READY; no MonoBehaviour injection)
+[Info   :TPM Mac Multi-Select] [MS][hover] event armed via=BuildLogic.OnCursorHoverStart (methodPointer swap; param=<type>; reference; virtualMethodPointer=True; no prologue rewrite)
+[Info   :TPM Mac Multi-Select] [MS][hover] HIT type=<native class> field=OnCursorHoverStart
+```
+
+`slot` and `flags` are the live `OnUpdate` MethodInfo. The values above are from the 0.4.13 log. `virtualMethodPointer` on the event line is `True` only when that word still matched the original pointer at arm time. The pass is `reference` on the event line and `field=OnCursorHoverStart` on the HIT line.
+
 The path does not call `ClassInjector`, `AddComponent`, `Harmony.Patch`, or a GameAssembly prologue rewrite. It does not write `OnBecomeActive` again. Poll stays off.
 
 ## Compile check
@@ -64,7 +77,7 @@ Copy `plugins/multiselect/bin/Release/TpmMacMultiselect.dll` to the game `BepInE
 2. Enter a level.
 3. Open build mode and enter item placement.
 4. Confirm `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`.
-5. Confirm `[MS][hover] sample armed via=CursorManager.OnUpdate`.
+5. Confirm `[MS][hover] sample armed via=CursorManager.OnUpdate` and `swap kept after PLACEMENT_READY`. On the same game build as the 0.4.13 log, `vtableSlot=True`, `virtualMethodPointer=True`, `slot=6`, and `flags=0x01E6`.
 6. Confirm `[MS][hover] event armed via=BuildLogic.OnCursorHoverStart`. The `param=` value is the live argument type. `reference` means the swap ran.
 7. Hover a world selectable. The held item sitting on the cursor is not this check.
 8. Find `[MS][hover] HIT type=` in that log. `field=` is `OnCursorHoverStart`.

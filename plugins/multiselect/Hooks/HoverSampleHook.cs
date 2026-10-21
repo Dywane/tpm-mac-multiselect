@@ -125,7 +125,7 @@ static class HoverSampleHook
                     "; virtualMethodPointer=" + virtualHit +
                     "; slot=" + slot +
                     "; flags=0x" + flags.ToString("X4") +
-                    "; samples after PLACEMENT_READY; no MonoBehaviour injection)");
+                    "; swap kept after PLACEMENT_READY; no MonoBehaviour injection)");
             }
         }
         catch (Exception ex)
