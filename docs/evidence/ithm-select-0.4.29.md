@@ -1,3 +1,5 @@
+Do not deploy this build. Live select reached `SelectEntity enter count=36` and `suppress entered` only for `b__76_0`. `CheckPromptProcessSelectedItems` never ran, the delete dialog still appeared, and Finish never called `CancelBuild` or `PlaceItem`. MS 0.4.30 finishes that exit. See `docs/evidence/ithm-select-0.4.30.md`.
+
 # ITHM Task5 prompt thunks and SelectEntity (MS 0.4.29)
 
 **MS:** 0.4.29

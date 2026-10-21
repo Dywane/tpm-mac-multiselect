@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.29** 给带参的拆除确认方法各自换上返回 0 的 thunk，并在 allow 检查为假时仍调用 `SelectEntity`。细节在 `docs/evidence/ithm-select-0.4.29.md`。
+**状态（2026-10-21）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.30** 在 `SelectEntity` 之后调用 `CancelBuild(false)` 和 `PlaceItem(leader, false, false)`，并用 methodPointer 把组选门闸换成返回 true。细节在 `docs/evidence/ithm-select-0.4.30.md`。
 
 **执行方：** demo建造  
 
