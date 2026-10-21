@@ -155,7 +155,7 @@ internal static class Program
         Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
-        Expect(plugin.Contains("0.4.16"), "version 0.4.16");
+        Expect(plugin.Contains("0.4.17"), "version 0.4.17");
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");

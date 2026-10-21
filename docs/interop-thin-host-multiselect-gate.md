@@ -90,7 +90,7 @@
 
 ---
 
-## Task 5 — hover（MS **0.4.16**；活体 HIT **待建造本机**）
+## Task 5 — hover（MS **0.4.17**；活体 HIT **待建造本机**）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
@@ -98,12 +98,12 @@
 | 禁止 | `IRuntimeBridge.TryInvoke` 主路径。不改 OnBecomeActive 序言。不恢复 poll。不用 `ClassInjector` / 自定义 MonoBehaviour / `AddComponent`。值类型不改写 prologue。多个对象字段不选一个。 | 源码 |
 | 取样 | `PLACEMENT_READY` 之后保留 `CursorManager.OnUpdate` 的 methodPointer swap。同一时机按显式布局镜像值类型参数，再对 `OnCursorHoverStart` 做 methodPointer swap（不写 vtable）。同一指针只打一行 HIT。 | `Hooks/HoverSampleHook.cs` |
 | 冷启 | 无 `HoverWatch failed`，无 `InjectorHelpers` TypeInitializationException。 | 0.4.12 失败见 `docs/evidence/ithm-hover-0.4.12.md` |
-| 版本 | Multiselect **0.4.16** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 版本 | Multiselect **0.4.17** / Host **0.4.0** | `Plugin.PluginVersion` |
 | 活体 | 至少一行 `[MS][hover] HIT type=`，且 `field=` 与 event 行的字段名相同 | 待 `docs/evidence/ithm-hover-x64.log` |
 
 ### 建造本机复现
 
-先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.13、0.4.14 或 0.4.15 的 DLL。步骤细节在 `docs/evidence/ithm-hover-0.4.16.md`。0.4.15 活体摘录也在那一页。
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.15 的 DLL。0.4.16 在 Mac 上没有编过。步骤细节在 `docs/evidence/ithm-hover-0.4.17.md`。
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"

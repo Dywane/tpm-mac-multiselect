@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** MS **0.4.16** 在 `PLACEMENT_READY` 之后镜像 `BuildLogic.OnCursorHoverStart` 的值类型参数并 methodPointer swap，读取其中唯一的对象字段。0.4.15 活体是 `param kind=0x11`，引用参数 thunk 没有挂上。`CursorManager.OnUpdate` 的 swap 保留且不再读 hover。0.4.13 的 `WorldCursorState` focus 与 0.4.14 的 `<Item>k__BackingField` 都不读。Step 2 活体 HIT 仍由建造本机按 `docs/evidence/ithm-hover-0.4.16.md` 复现。
+**状态（2026-10-21）：** MS **0.4.17** 在 `PLACEMENT_READY` 之后镜像 `BuildLogic.OnCursorHoverStart` 的值类型参数并 methodPointer swap，读取其中唯一的对象字段。反射用 `System.Type`（0.4.16 在 Mac 上与 `TPS.Game.Type` 冲突，未产出 DLL）。0.4.15 活体是 `param kind=0x11`。`CursorManager.OnUpdate` 的 swap 保留且不再读 hover。Step 2 活体 HIT 仍由建造本机按 `docs/evidence/ithm-hover-0.4.17.md` 复现。
 
 **执行方：** demo建造  
 

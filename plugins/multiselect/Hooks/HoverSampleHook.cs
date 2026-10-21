@@ -44,9 +44,9 @@ static class HoverSampleHook
     readonly struct LayoutSlot
     {
         public readonly int Offset;
-        public readonly Type ClrType;
+        public readonly System.Type ClrType;
 
-        public LayoutSlot(int offset, Type clrType)
+        public LayoutSlot(int offset, System.Type clrType)
         {
             Offset = offset;
             ClrType = clrType;
@@ -720,7 +720,7 @@ static class HoverSampleHook
         return klass != IntPtr.Zero && IL2CPP.il2cpp_class_is_enum(klass);
     }
 
-    static Type? Primitive(int kind)
+    static System.Type? Primitive(int kind)
     {
         return kind switch
         {
@@ -733,7 +733,7 @@ static class HoverSampleHook
         };
     }
 
-    static Type? WidthType(int width)
+    static System.Type? WidthType(int width)
     {
         return width switch
         {
@@ -745,7 +745,7 @@ static class HoverSampleHook
         };
     }
 
-    static bool AddSlot(List<LayoutSlot> slots, int offset, Type clr, int structSize, out string error)
+    static bool AddSlot(List<LayoutSlot> slots, int offset, System.Type clr, int structSize, out string error)
     {
         var width = clr == typeof(IntPtr) ? IntPtr.Size : Marshal.SizeOf(clr);
         if (offset < 0 || width <= 0 || offset + width > structSize)
@@ -769,7 +769,7 @@ static class HoverSampleHook
         return true;
     }
 
-    static int SlotAlign(Type clr)
+    static int SlotAlign(System.Type clr)
     {
         if (clr == typeof(double) || clr == typeof(long) || clr == typeof(IntPtr))
             return 8;
@@ -787,7 +787,7 @@ static class HoverSampleHook
         return 0;
     }
 
-    static bool TryEmitThunk(Type structType, ModuleBuilder module, IntPtr original, out Delegate hookDel, out string error)
+    static bool TryEmitThunk(System.Type structType, ModuleBuilder module, IntPtr original, out Delegate hookDel, out string error)
     {
         hookDel = null!;
         var delBuilder = module.DefineType(
@@ -845,7 +845,7 @@ static class HoverSampleHook
         return true;
     }
 
-    static bool TryEmitStruct(int size, int pack, List<LayoutSlot> slots, out Type created, out ModuleBuilder module, out string error)
+    static bool TryEmitStruct(int size, int pack, List<LayoutSlot> slots, out System.Type created, out ModuleBuilder module, out string error)
     {
         created = typeof(byte);
         module = null!;

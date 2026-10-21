@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.16)
 
+Did not compile on the Mac build machine (`4f738b3`, 27 errors). `using TPS.Game` made `Type` ambiguous with `System.Type`. Do not deploy this tip. The readable build is MS 0.4.17 in `docs/evidence/ithm-hover-0.4.17.md`.
+
 **MS:** 0.4.16
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
 **Live HIT:** still for the build machine. This VM cannot run the game.
