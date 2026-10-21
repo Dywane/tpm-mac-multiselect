@@ -90,20 +90,20 @@
 
 ---
 
-## Task 5 — Shift 框选（MS **0.4.27**；通过线是 `HIT count=`，再加 `SelectEntity enter`）
+## Task 5 — Shift 框选（MS **0.4.28**；通过线是 `HIT count=`，再加 `SelectEntity enter`）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 读法 | 0.4.26 的 Shift 路径不变，`HIT count=` 仍打。`StartGameDragSelect(0)` 是零售拆除框。调用前把 `CheckPromptProcessSelectedItems` 的 methodPointer 换成空 thunk，结束或未进入拖拽时写回。`count>0` 时从 `_itemsSelected` 枚举，`ClearAllSelectedEntities` 后对通过 `IsGroupSelectionAllowedForEntity` 的实体调用 `SelectEntity`。不调用 `PlaceItem`。不写字节 `RET`。 | `docs/evidence/ithm-select-0.4.27.md` |
+| 读法 | 0.4.26 的 Shift 路径不变，`HIT count=` 仍打。拆除确认的跳过覆盖 `CheckPrompt`、`ProcessSelected`、`Demolish`、`ConfirmDelete` 的无参实例方法，含父类。methodPointer 和 vtable 里指向原函数的槽都换上。`Finish` 不恢复。离开 `CursorModeGameDragSelect` 后的下一帧才恢复。`_itemsSelected` 用 `get_Item`、`CopyTo`，或拆箱后的枚举器抄出，并在拖拽中保留上一份。日志 `snapshot copied=` 在 `ClearAll` 之前。然后 `SelectEntity`。不调用 `PlaceItem`。不写字节 `RET`。 | `docs/evidence/ithm-select-0.4.28.md` |
 | 禁止 | poll 不作放置就绪主路径。不恢复 hover。不用 `ClassInjector`。不改写 prologue，不写 `0xC3`，不移植 SeanB 的 `VirtualProtect`。冷启不 swap `CursorManager.OnUpdate`。 | 源码 |
 | 取样 | 冷启只保留 `CursorModePlaceItem.OnBecomeActive`。`PLACEMENT_READY` 之后 `DragSelectWatch.Arm`。 | `Hooks/DragSelectWatch.cs` |
 | 冷启 | `Chainloader startup complete` 之后应进入主菜单。无 `watch armed`。 | 0.4.21 黑屏见 `docs/evidence/ithm-hover-0.4.22.md` |
-| 版本 | Multiselect **0.4.27** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 版本 | Multiselect **0.4.28** / Host **0.4.0** | `Plugin.PluginVersion` |
 | 活体 | 有 `hover hooks removed`、`watch armed`、`enter StartGameDragSelect`、`HIT count=`。没有 `[MS][hover] HIT`。 | 待 `docs/evidence/ithm-hover-x64.log` |
 
 ### 建造本机复现
 
-先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.26 的 DLL。步骤细节在 `docs/evidence/ithm-select-0.4.27.md`。
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.27 的 DLL。步骤细节在 `docs/evidence/ithm-select-0.4.28.md`。
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"
@@ -112,7 +112,7 @@ dotnet build plugins/multiselect/TpmMacMultiselect.csproj -c Release
 
 把 `plugins/multiselect/bin/Release/TpmMacMultiselect.dll` 拷到游戏 `BepInEx/plugins/`。从游戏根目录运行 `./run_bepinex.sh`。
 
-1. 冷启后确认 `Loading [TPM Mac Multi-Select 0.4.27]`、`hover hooks removed`、`Chainloader startup complete` 和主菜单。
+1. 冷启后确认 `Loading [TPM Mac Multi-Select 0.4.28]`、`hover hooks removed`、`Chainloader startup complete` 和主菜单。
 2. 进入关卡，进入一次物品放置。确认 `PLACEMENT_READY`、`watch armed` 和随后的 `[MS][select] probe`。
 3. 若没有 `probe`，OnUpdate 没有跑。保存 armed 行即可。
 4. 退出放置，回到普通光标。

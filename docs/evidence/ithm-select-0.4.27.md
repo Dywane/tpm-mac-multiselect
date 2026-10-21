@@ -1,5 +1,7 @@
 # ITHM Task5 group select after the demolish drag (MS 0.4.27)
 
+Do not deploy this build. `suppress hit` ran with `vtableSlot=False slot=65535` and there was no `suppress entered`, so the delete dialog still appeared. `SelectEntity enter count=0 copied=0` while `HIT count=36`. MS 0.4.28 keeps the skip until the drag mode is gone and copies the entities with `get_Item` or `CopyTo`. See `docs/evidence/ithm-select-0.4.28.md`.
+
 **MS:** 0.4.27
 **Host:** 0.4.0. Do not replace the Host DLL.
 **Live drag:** still for the build machine. This VM cannot run the game.

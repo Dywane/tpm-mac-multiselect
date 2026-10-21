@@ -1,6 +1,6 @@
 # game-hooks（TPM Mac 多选）
 
-> **ITHM Task5（2026-10-21）：** 悬停 HIT 停止。MS **0.4.26** 活体 `HIT count=` 已通过，松手弹出拆除确认。MS **0.4.27** 在 `StartGameDragSelect` 之前用 methodPointer 跳过 `CursorModeGameDragSelect.CheckPromptProcessSelectedItems`，拖拽结束后恢复，并对 `_itemsSelected` 调用 `LevelEditorGroupSelectionManager.SelectEntity`。不写 `0xC3`。不调用 `PlaceItem`。`HIT count=` 仍保留。活体按 `docs/evidence/ithm-select-0.4.27.md`。Poll 与 prologue rewrite 保持关闭。
+> **ITHM Task5（2026-10-21）：** 悬停 HIT 停止。MS **0.4.27** 的 prompt methodPointer 没被游戏调用（`slot=65535`，无 `suppress entered`），`SelectEntity copied=0`。MS **0.4.28** 对 `CheckPrompt` / `ProcessSelected` / `Demolish` / `ConfirmDelete` 的无参实例方法换 methodPointer，并在类和父类 vtable 里按函数指针改槽。跳过一直保持到离开 `CursorModeGameDragSelect` 的下一帧。实体用 `get_Item` 或 `CopyTo` 在 `ClearAll` 之前抄下，拖拽过程中另存一份。不写字节 `RET`。不调用 `PlaceItem`。活体按 `docs/evidence/ithm-select-0.4.28.md`。Poll 与 prologue rewrite 保持关闭。
 > **ITHM Task4（2026-10-21）：** `PlacementReadyHook` MS **0.4.11** methodPointer swap。§4.5 **PASS**。日志 `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`。Evidence `docs/evidence/ithm-0.4.11-placement-ready-20261021.md`。Dobby/Abs64 stay OFF. Poll retired. PRM WAITING_LEVEL 仍冻结。
 > **本刀权威路径（2026-10-20 Asia/Shanghai）：** Interop 瘦 Host + Multiselect **直绑** `Il2Cpp*` — 见 `docs/plans/tpm-mac-interop-thin-host-multiselect-plan.md` / 门禁 `docs/interop-thin-host-multiselect-gate.md`。  
 > **冻结：** 旧 PRM（`tpm-mac-plugin-runtime-multiselect`）/ `IRuntimeBridge` 玩法门面 / CAPI / `WAITING_LEVEL` 盲轮询 **不作本刀验收**。下文 PRM 段仅作史实归档。

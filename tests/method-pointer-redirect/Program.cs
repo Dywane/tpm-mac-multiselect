@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.27"), "version 0.4.27");
+        Expect(plugin.Contains("0.4.28"), "version 0.4.28");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -189,6 +189,9 @@ internal static class Program
         Expect(watch.Contains("CheckPromptProcessSelectedItems"), "names the demolish prompt");
         Expect(watch.Contains("suppress hit"), "logs the prompt skip");
         Expect(watch.Contains("[MS][select] SelectEntity enter count="), "logs SelectEntity");
+        Expect(watch.Contains("suppress hold"), "keeps the prompt skip after finish");
+        Expect(watch.Contains("before ClearAll"), "snapshots before clearing the group");
+        Expect(watch.Contains("get_Item"), "reads the selection by index");
         Expect(!watch.Contains("VirtualProtect"), "no native byte patch");
         Expect(!watch.Contains("0xC3"), "no ret patch");
         Expect(!watch.Contains("0x18"), "no hardcoded Win offset");
