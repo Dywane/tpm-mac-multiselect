@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.18)
 
+Live partial on 2026-10-21 ~13:48. The byref arm logged `field=Selected` and `offset=0`, then place and hover produced no thunk line. MS 0.4.19 logs thunk entry. See `docs/evidence/ithm-hover-0.4.19.md`.
+
 **MS:** 0.4.18
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
 **Live HIT:** still for the build machine. This VM cannot run the game.

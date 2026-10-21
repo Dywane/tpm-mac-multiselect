@@ -79,6 +79,8 @@ static class HoverSampleHook
     static HoverHit[] _hits = Array.Empty<HoverHit>();
     static int _valueSize;
     static bool _multiLogged;
+    static bool _enterLogged;
+    static string? _enterState;
 
     public static void Arm()
     {
@@ -559,13 +561,58 @@ static class HoverSampleHook
         _hoverDepth = 1;
         try
         {
+            NoteEnter(structPtr);
             orig(structPtr, methodInfo);
             Report(structPtr);
+        }
+        catch (Exception ex)
+        {
+            Plugin.LogSrc.LogError("[MS][hover] OnCursorHoverStart threw " + ExceptionText.Format(ex));
+            throw;
         }
         finally
         {
             _hoverDepth = 0;
         }
+    }
+
+    static void NoteEnter(IntPtr structPtr)
+    {
+        if (!_enterLogged)
+        {
+            _enterLogged = true;
+            Plugin.LogSrc.LogInfo("[MS][hover] enter OnCursorHoverStart");
+        }
+
+        string state;
+        try
+        {
+            state = DescribeSelected(structPtr);
+        }
+        catch (Exception ex)
+        {
+            state = "selected=unreadable " + ExceptionText.Format(ex);
+        }
+
+        if (state == _enterState)
+            return;
+        _enterState = state;
+        Plugin.LogSrc.LogInfo("[MS][hover] enter OnCursorHoverStart " + state);
+    }
+
+    static string DescribeSelected(IntPtr structPtr)
+    {
+        if (structPtr == IntPtr.Zero)
+            return "ptr=0";
+        if (_hits.Length != 1)
+            return "refs=" + _hits.Length;
+        var hit = _hits[0];
+        if (hit.Offset < 0 || hit.Offset + IntPtr.Size > _valueSize)
+            return "selected=offset";
+        var selected = Marshal.ReadIntPtr(structPtr, hit.Offset);
+        if (selected == IntPtr.Zero)
+            return "selected=null";
+        return "selected=" + selected.ToString("X") + ":" + NativeTypeName(selected);
     }
 
     static bool TryFindZeroArg(IntPtr klass, string methodName, out IntPtr method, out IntPtr fn)

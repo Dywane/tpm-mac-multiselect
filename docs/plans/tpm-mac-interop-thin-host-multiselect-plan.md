@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** MS **0.4.18** 在 `PLACEMENT_READY` 之后对 byref `BuildLogic.OnCursorHoverStart`（`HoverStart&`）做 methodPointer swap，按未装箱偏移读取唯一对象字段 `Selected`（活体 raw 16，读取 0）。0.4.17 活体把该偏移判成超出 `size=16` 而未挂上。`CursorManager.OnUpdate` 的 swap 保留且不再读 hover。Step 2 活体 HIT 仍由建造本机按 `docs/evidence/ithm-hover-0.4.18.md` 复现。
+**状态（2026-10-21）：** MS **0.4.19** 仍在 `PLACEMENT_READY` 之后 swap byref `BuildLogic.OnCursorHoverStart`。0.4.18 活体挂上 `Selected` 偏移 0 后，place 加 hover 没有 HIT 也没有 MISS。0.4.19 在 thunk 入口打 `enter OnCursorHoverStart`，用来区分方法没被调用和 `Selected` 为空。Step 2 仍由建造本机按 `docs/evidence/ithm-hover-0.4.19.md` 复现。
 
 **执行方：** demo建造  
 
