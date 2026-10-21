@@ -15,6 +15,7 @@ internal static class Program
         Vtable_refuses_a_mismatch_or_a_bad_slot();
         Hook_source_does_not_rewrite_game_assembly();
         Hover_sample_does_not_inject_a_monobehaviour();
+        Boxed_hover_field_offset_unboxes_to_the_value();
         Exception_text_keeps_the_inner_exception();
         if (_fails != 0)
         {
@@ -155,12 +156,15 @@ internal static class Program
         Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
-        Expect(plugin.Contains("0.4.17"), "version 0.4.17");
+        Expect(plugin.Contains("0.4.18"), "version 0.4.18");
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
         Expect(sample.Contains("OnCursorHoverStart"), "arms BuildLogic.OnCursorHoverStart");
         Expect(sample.Contains("il2cpp_class_is_valuetype"), "checks a valuetype hover argument");
+        Expect(sample.Contains("il2cpp_type_is_byref"), "byref valuetype uses the pointer ABI");
+        Expect(sample.Contains("HoverByrefThunk"), "byref thunk reads the struct pointer");
+        Expect(sample.Contains("ValueFieldOffset.TryUnbox"), "boxed field offsets are unboxed");
         Expect(sample.Contains("il2cpp_class_value_size"), "reads the valuetype size");
         Expect(sample.Contains("LayoutKind.Explicit"), "mirrors the valuetype for the native ABI");
         Expect(sample.Contains("param="), "arm and refuse lines name the param");
@@ -178,6 +182,23 @@ internal static class Program
         Expect(!sample.Contains("OnBecomeActive"), "sample does not retarget OnBecomeActive");
         Expect(place.Contains("TryArmEnterMethodPointer"), "enter arm remains");
         Expect(place.Contains("HoverSampleHook.Arm"), "sample arms after placement ready");
+    }
+
+    static void Boxed_hover_field_offset_unboxes_to_the_value()
+    {
+        Expect(Unbox(16, 8, 16, 0), "Selected boxed 16 fits size 16 at 0");
+        Expect(Unbox(24, 8, 16, 8), "second boxed field fits size 16 at 8");
+        Expect(Unbox(16, 8, 32, 0), "boxed offset that also fits raw prefers the header");
+        Expect(Unbox(0, 8, 16, 0), "already unboxed start");
+        Expect(Unbox(8, 8, 16, 8), "already unboxed mid stays");
+        Expect(!ValueFieldOffset.TryUnbox(32, 8, 16, out _), "still outside after the header");
+        Expect(!ValueFieldOffset.TryUnbox(16, 0, 16, out _), "zero width");
+        Expect(!ValueFieldOffset.TryUnbox(-1, 8, 16, out _), "negative offset");
+    }
+
+    static bool Unbox(int raw, int width, int size, int expected)
+    {
+        return ValueFieldOffset.TryUnbox(raw, width, size, out var at) && at == expected;
     }
 
     static void Exception_text_keeps_the_inner_exception()

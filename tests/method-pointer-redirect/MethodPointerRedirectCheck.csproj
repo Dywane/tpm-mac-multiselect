@@ -9,5 +9,6 @@
   <ItemGroup>
     <Compile Include="../../plugins/multiselect/Hooks/MethodPointerRedirect.cs" />
     <Compile Include="../../plugins/multiselect/Hooks/ExceptionText.cs" />
+    <Compile Include="../../plugins/multiselect/Hooks/ValueFieldOffset.cs" />
   </ItemGroup>
 </Project>

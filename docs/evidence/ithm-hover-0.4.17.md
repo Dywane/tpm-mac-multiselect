@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.17)
 
+Superseded by MS 0.4.18. Live refuse on 2026-10-21: `HoverStart&` was forwarded as a by-value struct, and `Selected` at boxed offset 16 was refused against value_size 16. Do not deploy this build for hover. See `docs/evidence/ithm-hover-0.4.18.md`.
+
 **MS:** 0.4.17
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
 **Live HIT:** still for the build machine. This VM cannot run the game.

@@ -229,7 +229,10 @@ static class HoverSampleHook
 
             if (kind == Il2CppTypeValue || (kind == Il2CppTypeGenericInst && IsValueGeneric(type)))
             {
-                hooked = ArmValue(method, original, kind, typeName, type);
+                if (type != IntPtr.Zero && IL2CPP.il2cpp_type_is_byref(type))
+                    hooked = ArmByref(method, original, kind, typeName, type);
+                else
+                    hooked = ArmValue(method, original, kind, typeName, type);
                 return;
             }
 
@@ -265,6 +268,56 @@ static class HoverSampleHook
     }
 
     static ZeroArgInstance? _hoverThunkHolder;
+
+    static bool ArmByref(IntPtr method, IntPtr original, int kind, string typeName, IntPtr type)
+    {
+        var argClass = IL2CPP.il2cpp_class_from_type(type);
+        if (argClass == IntPtr.Zero || !IL2CPP.il2cpp_class_is_valuetype(argClass))
+        {
+            Refuse(kind, typeName, "class is not a valuetype");
+            return false;
+        }
+
+        if (IntPtr.Size != 8)
+        {
+            Refuse(kind, typeName, "pointer width " + IntPtr.Size);
+            return false;
+        }
+
+        IL2CPP.il2cpp_runtime_class_init(argClass);
+        uint align = 0;
+        var size = IL2CPP.il2cpp_class_value_size(argClass, ref align);
+        var slots = new List<LayoutSlot>();
+        var hits = new List<HoverHit>();
+        var direct = new List<string>();
+        if (!TryCollect(argClass, 0, size, 0, true, "", slots, hits, direct, out var reason))
+        {
+            Refuse(kind, typeName, "size=" + size + " " + reason + " fields=" + JoinFields(direct));
+            return false;
+        }
+
+        if (hits.Count == 0)
+        {
+            Refuse(kind, typeName, "size=" + size + " refs=0 fields=" + JoinFields(direct));
+            return false;
+        }
+
+        _hits = hits.ToArray();
+        _valueSize = size;
+        _hoverThunkHolder = HoverByrefThunk;
+        _hoverOriginal = Marshal.GetDelegateForFunctionPointer<ZeroArgInstance>(original);
+        var hookPtr = Marshal.GetFunctionPointerForDelegate(_hoverThunkHolder);
+        Thread.MemoryBarrier();
+        var fieldText = hits.Count == 1
+            ? "field=" + hits[0].Name + "; offset=" + hits[0].Offset
+            : "refs=" + hits.Count;
+        return CommitSwap(
+            method,
+            original,
+            hookPtr,
+            typeName,
+            "byref; size=" + size + "; " + fieldText + "; fields=" + JoinFields(direct));
+    }
 
     static bool ArmValue(IntPtr method, IntPtr original, int kind, string typeName, IntPtr type)
     {
@@ -492,6 +545,29 @@ static class HoverSampleHook
         }
     }
 
+    static void HoverByrefThunk(IntPtr structPtr, IntPtr methodInfo)
+    {
+        var orig = _hoverOriginal;
+        if (orig is null)
+            return;
+        if (_hoverDepth != 0)
+        {
+            orig(structPtr, methodInfo);
+            return;
+        }
+
+        _hoverDepth = 1;
+        try
+        {
+            orig(structPtr, methodInfo);
+            Report(structPtr);
+        }
+        finally
+        {
+            _hoverDepth = 0;
+        }
+    }
+
     static bool TryFindZeroArg(IntPtr klass, string methodName, out IntPtr method, out IntPtr fn)
     {
         method = IntPtr.Zero;
@@ -582,6 +658,57 @@ static class HoverSampleHook
         return argClass != IntPtr.Zero && IL2CPP.il2cpp_class_is_valuetype(argClass);
     }
 
+    static bool TryFieldWidth(int kind, IntPtr type, out int width, out string error)
+    {
+        error = "";
+        if (IsObjectArg(kind, type) || kind is Il2CppTypePtr or Il2CppTypeI or Il2CppTypeU8 or Il2CppTypeI8 or Il2CppTypeU)
+        {
+            width = IntPtr.Size;
+            return true;
+        }
+
+        if (kind == Il2CppTypeEnum || (kind == Il2CppTypeValue && IsEnumType(type)))
+        {
+            if (TryEnumWidth(type, out width) && width > 0)
+                return true;
+            width = 0;
+            error = "enum width";
+            return false;
+        }
+
+        if (kind == Il2CppTypeValue || (kind == Il2CppTypeGenericInst && IsValueGeneric(type)))
+        {
+            var inner = IL2CPP.il2cpp_class_from_type(type);
+            if (inner == IntPtr.Zero)
+            {
+                width = 0;
+                error = "nested class zero";
+                return false;
+            }
+
+            uint align = 0;
+            width = IL2CPP.il2cpp_class_value_size(inner, ref align);
+            if (width > 0)
+                return true;
+            error = "nested size " + width;
+            return false;
+        }
+
+        var primitive = Primitive(kind);
+        if (primitive is null)
+        {
+            width = 0;
+            error = "unhandled kind 0x" + kind.ToString("X2");
+            return false;
+        }
+
+        width = Marshal.SizeOf(primitive);
+        if (width > 0)
+            return true;
+        error = "width " + width;
+        return false;
+    }
+
     static bool TryCollect(
         IntPtr klass,
         int baseOffset,
@@ -613,6 +740,10 @@ static class HoverSampleHook
             return false;
         }
 
+        IL2CPP.il2cpp_runtime_class_init(klass);
+        uint align = 0;
+        var declaringSize = IL2CPP.il2cpp_class_value_size(klass, ref align);
+        var errors = new List<string>();
         var iter = IntPtr.Zero;
         while (true)
         {
@@ -621,31 +752,56 @@ static class HoverSampleHook
                 break;
             if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) != 0)
                 continue;
-            var offset = (int)IL2CPP.il2cpp_field_get_offset(field);
-            if (offset < 0)
+            var raw = (int)IL2CPP.il2cpp_field_get_offset(field);
+            if (raw < 0)
                 continue;
-            var abs = baseOffset + offset;
             var type = IL2CPP.il2cpp_field_get_type(field);
+            var name = IL2CPP.il2cpp_field_get_name_(field) ?? "?";
+            var qualified = prefix.Length == 0 ? name : prefix + name;
             if (type == IntPtr.Zero)
             {
-                error = "field type zero";
-                return false;
+                if (top)
+                    direct.Add(name + ":?@" + raw);
+                errors.Add("field type zero " + qualified);
+                continue;
             }
 
             var kind = IL2CPP.il2cpp_type_get_type(type);
-            var name = IL2CPP.il2cpp_field_get_name_(field) ?? "?";
-            var qualified = prefix.Length == 0 ? name : prefix + name;
-            if (top)
+            var typeName = IL2CPP.il2cpp_type_get_name_(type) ?? "?";
+            if (!TryFieldWidth(kind, type, out var width, out var widthError))
             {
-                var typeName = IL2CPP.il2cpp_type_get_name_(type) ?? "?";
-                direct.Add(name + ":" + typeName + "@" + abs);
+                if (top)
+                    direct.Add(name + ":" + typeName + "@" + raw);
+                errors.Add(widthError + " " + qualified);
+                continue;
             }
 
-            if (!TryAddField(kind, type, qualified, abs, structSize, depth, slots, hits, direct, out error))
-                return false;
+            if (!ValueFieldOffset.TryUnbox(raw, width, declaringSize, out var local))
+            {
+                if (top)
+                    direct.Add(name + ":" + typeName + "@" + raw);
+                errors.Add("field at " + raw + " width " + width + " outside size " + declaringSize);
+                continue;
+            }
+
+            var abs = baseOffset + local;
+            if (top)
+            {
+                direct.Add(local == raw
+                    ? name + ":" + typeName + "@" + raw
+                    : name + ":" + typeName + "@" + raw + "->" + local);
+            }
+
+            if (!TryAddField(kind, type, qualified, abs, structSize, depth, slots, hits, direct, out var fieldError))
+                errors.Add(fieldError);
         }
 
-        return true;
+        if (errors.Count == 0)
+            return true;
+        error = string.Join("; ", errors);
+        if (error.Length > 500)
+            error = error.Substring(0, 500);
+        return false;
     }
 
     static bool TryAddField(
