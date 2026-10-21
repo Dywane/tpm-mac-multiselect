@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** MS **0.4.20** 停掉静态 `BuildLogic.OnCursorHoverStart`。本地 stub 没有该方法体，0.4.19 活体零 enter。放置悬停里已经证明会进入的 methodPointer 是 `CursorManager.OnUpdate`（0.4.13 MISS）。0.4.20 只给它打 enter，不读 focus，不读 `<Item>k__BackingField`。细节在 `docs/evidence/ithm-hover-0.4.20.md`。
+**状态（2026-10-21）：** MS **0.4.21** 停掉 `BuildLogic.OnCursorHoverStart`。Win dump RVA `0x3791E0` 是 EMPTY_STUB_SHARED。HIT 读 `ESCursorSelectResult.Result`，偏移来自 Mac 字段元数据。`CursorManager.OnUpdate` 仍是 sample。类型缺失就停。细节在 `docs/evidence/ithm-hover-0.4.21.md`。
 
 **执行方：** demo建造  
 

@@ -155,11 +155,16 @@ internal static class Program
         Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
-        Expect(plugin.Contains("0.4.20"), "version 0.4.20");
+        Expect(plugin.Contains("0.4.21"), "version 0.4.21");
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
         Expect(sample.Contains("[MS][hover] enter CursorManager.OnUpdate"), "OnUpdate thunk logs enter");
+        Expect(sample.Contains("[MS][hover] enter ESCursorSelectResult.OnUpdate"), "select thunk logs enter");
+        Expect(sample.Contains("il2cpp_class_from_name"), "resolves ESCursorSelectResult by name");
+        Expect(sample.Contains("il2cpp_field_get_offset"), "reads Result offset from metadata");
+        Expect(sample.Contains("field=Result"), "hit field is Result");
+        Expect(!sample.Contains("0x18"), "does not hardcode the Win field offset");
         Expect(sample.Contains("OnCursorHoverStart retired"), "static hover arm is retired");
         Expect(!sample.Contains("event armed via=BuildLogic.OnCursorHoverStart"), "does not arm OnCursorHoverStart");
         Expect(!sample.Contains("il2cpp_type_is_byref"), "byref mirror is gone");
@@ -170,6 +175,7 @@ internal static class Program
         Expect(!bridge.Contains("_previouslyFocusedElement"), "hover read drops previous UI focus");
         Expect(!bridge.Contains("<Item>k__BackingField"), "hover read drops the held item");
         Expect(!bridge.Contains("OnCursorHoverStart"), "bridge does not name the retired hover method");
+        Expect(bridge.Contains("ESCursorSelectResult.Result"), "bridge names the Result field");
         var formatted = File.ReadAllText(Path.Combine(root, "plugins/multiselect/Hooks/ExceptionText.cs"));
         Expect(formatted.Contains("InnerException"), "formatter walks InnerException");
         Expect(sample.Contains("ExceptionText.Format"), "arm failure uses the formatter");

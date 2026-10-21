@@ -1,6 +1,6 @@
 # ITHM Task5 hover read (MS 0.4.19)
 
-Live FAIL_NO_ENTER on 2026-10-21 ~14:16. The byref arm logged `event armed` and then place plus hover produced no `enter OnCursorHoverStart`. MS 0.4.20 retires that static swap. See `docs/evidence/ithm-hover-0.4.20.md`.
+Live FAIL_NO_ENTER on 2026-10-21 ~14:16. The byref arm logged `event armed` and then place plus hover produced no `enter OnCursorHoverStart`. Win dump RVA `0x3791E0` is EMPTY_STUB_SHARED. MS 0.4.21 reads `ESCursorSelectResult.Result`. See `docs/evidence/ithm-hover-0.4.21.md`.
 
 **MS:** 0.4.19
 **Host:** 0.4.0. Do not replace the Host DLL from this change.

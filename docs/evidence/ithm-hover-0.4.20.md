@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.20)
 
+Do not deploy this build. Win dump RVA `0x3791E0` is EMPTY_STUB_SHARED, and this tip does not read a selectable. MS 0.4.21 arms `ESCursorSelectResult.OnUpdate` and reads `Result`. See `docs/evidence/ithm-hover-0.4.21.md`.
+
 **MS:** 0.4.20
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
 **Live HIT:** not claimed. This VM cannot run the game. The stub has no selectable field to read.
