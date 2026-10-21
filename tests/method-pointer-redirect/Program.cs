@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.30"), "version 0.4.30");
+        Expect(plugin.Contains("0.4.31"), "version 0.4.31");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -194,7 +194,8 @@ internal static class Program
         Expect(watch.Contains("CheckPromptProcessSelectedItems"), "names the demolish prompt");
         Expect(watch.Contains("suppress hit"), "logs the prompt skip");
         Expect(watch.Contains("[MS][select] suppress entered "), "logs suppress entered");
-        Expect(watch.Contains("[MS][select] allow i="), "logs why the allow check fails");
+        Expect(watch.Contains("[MS][select] allow skip reason=native-crash-0.4.30"), "skips the crashing allow invoke");
+        Expect(!watch.Contains("il2cpp_runtime_invoke(_allowMethod"), "does not invoke the per-entity allow check");
         Expect(watch.Contains("ProcessSelected"), "stubs ProcessSelected overloads");
         Expect(!watch.Contains("argc != 0"), "prompt stubs include methods with arguments");
         Expect(watch.Contains("[MS][select] SelectEntity enter count="), "logs SelectEntity");

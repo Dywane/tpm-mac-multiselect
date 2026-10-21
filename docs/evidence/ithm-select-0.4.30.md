@@ -1,3 +1,5 @@
+Do not deploy this build. Live Finish crashed with SIGSEGV at null+0x18 inside the per-entity `IsGroupSelectionAllowedForEntity` invoke, after `allow i=0` through `allow i=2` and before `exit prepare CancelBuild`. MS 0.4.31 does not call that method. See `docs/evidence/ithm-select-0.4.31.md`.
+
 # ITHM Task5 CancelBuild and PlaceItem (MS 0.4.30)
 
 **MS:** 0.4.30

@@ -100,6 +100,7 @@ static class DragSelectWatch
     static bool _setBound;
     static IntPtr _clearMethod;
     static IntPtr _allowMethod;
+    static bool _allowSkipLogged;
     static IntPtr _selectMethod;
     static bool _selectBoolFirst;
     static bool _groupBound;
@@ -1998,14 +1999,17 @@ static class DragSelectWatch
 
         if (filtered > 0)
             InstallGate();
+        if (!_allowSkipLogged)
+        {
+            _allowSkipLogged = true;
+            Plugin.LogSrc.LogInfo("[MS][select] allow skip reason=native-crash-0.4.30");
+        }
+
         InvokeClear(mgr);
         var kept = 0;
         var rejected = 0;
         var failed = 0;
         var leader = IntPtr.Zero;
-        var samples = filtered < 3 ? filtered : 3;
-        for (var s = 0; s < samples; s++)
-            LogAllow(s, mgr, chosen[s]);
         for (var i = 0; i < filtered; i++)
         {
             if (chosen[i] == IntPtr.Zero)
@@ -2467,33 +2471,6 @@ static class DragSelectWatch
         }
 
         return false;
-    }
-
-    static unsafe void LogAllow(int index, IntPtr mgr, IntPtr entity)
-    {
-        var value = "missing";
-        var shown = "none";
-        if (_allowMethod != IntPtr.Zero)
-        {
-            var exc = IntPtr.Zero;
-            var arg = entity;
-            var argv = stackalloc void*[1];
-            argv[0] = &arg;
-            var ret = IL2CPP.il2cpp_runtime_invoke(_allowMethod, mgr, argv, ref exc);
-            if (exc != IntPtr.Zero)
-                shown = ClassName(exc);
-            else if (ret == IntPtr.Zero)
-                value = "nullbox";
-            else
-                value = Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0 ? "1" : "0";
-        }
-
-        Plugin.LogSrc.LogInfo(
-            "[MS][select] allow i=" + index +
-            " mgr=" + mgr.ToInt64().ToString("X") +
-            " entity=" + entity.ToInt64().ToString("X") +
-            " value=" + value +
-            " exc=" + shown);
     }
 
     static IntPtr FindInstanceArgc(IntPtr klass, string methodName, uint argc)
