@@ -1,6 +1,6 @@
 # ITHM Task5 hover sample (MS 0.4.13)
 
-Superseded by `docs/evidence/ithm-hover-0.4.14.md`. The live log at 2026-10-21 11:39 (MS 0.4.13, tip `13570c2`) armed `CursorManager.OnUpdate` and logged `[MS][hover] MISS reason=WorldCursorState focus fields null` while a world selectable was under the cursor in placement. Do not redeploy this build to retest hover.
+Superseded by `docs/evidence/ithm-hover-0.4.15.md`. 0.4.14's held-item read was withdrawn before a live smoke. The live log at 2026-10-21 11:39 (MS 0.4.13, tip `13570c2`) armed `CursorManager.OnUpdate` and logged `[MS][hover] MISS reason=WorldCursorState focus fields null` while a world selectable was under the cursor in placement. Do not redeploy this build to retest hover.
 
 **Result of this change:** cold start no longer registers a MonoBehaviour. The build machine still has to capture a live HIT.
 **MS:** 0.4.13

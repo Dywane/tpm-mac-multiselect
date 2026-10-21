@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** MS **0.4.14** 在 `CursorManager.OnUpdate` 上读 `_mode` → `<Item>k__BackingField`。0.4.13 活体 MISS 是 `WorldCursorState` focus 为 null。Step 2 活体 HIT 仍由建造本机按 `docs/evidence/ithm-hover-0.4.14.md` 复现。
+**状态（2026-10-21）：** MS **0.4.15** 在 `PLACEMENT_READY` 之后对静态 `BuildLogic.OnCursorHoverStart` 做 methodPointer swap，把该引用参数交给 `TryGetHoveredSelectable`。`CursorManager.OnUpdate` 的 swap 保留且不再读 hover。0.4.13 活体 MISS 是 `WorldCursorState` focus 为 null。0.4.14 的 `<Item>k__BackingField` 是手上物品，已撤回。Step 2 活体 HIT 仍由建造本机按 `docs/evidence/ithm-hover-0.4.15.md` 复现。
 
 **执行方：** demo建造  
 
