@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** Task5 是 SeanB 框选。MS **0.4.25** 在每个 image 里找 Left Shift，旧 Input 没有方法时改读 `Keyboard.current.leftShiftKey.wasPressedThisFrame`。通过线仍是 `[MS][select] HIT count=N`。细节在 `docs/evidence/ithm-select-0.4.25.md`。
+**状态（2026-10-21）：** Task5 是 SeanB 框选。MS **0.4.26** 同时读旧 Input 和 `Keyboard.current.leftShiftKey`，KeyCode 取自元数据。通过线仍是 `[MS][select] HIT count=N`。细节在 `docs/evidence/ithm-select-0.4.26.md`。
 
 **执行方：** demo建造  
 

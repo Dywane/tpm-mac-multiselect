@@ -1,5 +1,7 @@
 # ITHM Task5 Shift drag select (MS 0.4.25)
 
+Do not deploy this build. The watch armed (`shift=GetKey(KeyCode)@UnityEngine.dll`, `instance=get_Instance`) and then Left Shift in select mode produced no `enter StartGameDragSelect`. MS 0.4.26 reads every Shift source and logs a probe. See `docs/evidence/ithm-select-0.4.26.md`.
+
 **MS:** 0.4.25
 **Host:** 0.4.0. Do not replace the Host DLL.
 **Live drag:** still for the build machine. This VM cannot run the game.

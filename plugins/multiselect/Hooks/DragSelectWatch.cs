@@ -11,7 +11,11 @@ static class DragSelectWatch
 {
     const int FieldStatic = 0x0010;
     const int MinInstanceOffset = 16;
-    const int LeftShift = 304;
+    const int CocoaShift = 512;
+    const int CocoaRightShift = 8192;
+    const int ProbeCandidates0 = 303;
+    const int ProbeCandidates1 = 304;
+    const int ProbeCandidates2 = 305;
 
     enum Phase
     {
@@ -29,6 +33,7 @@ static class DragSelectWatch
     static bool _gaveUp;
     static bool _enterLogged;
     static bool _keyThrew;
+    static bool _probeThrew;
     static bool _callThrew;
     static string? _ignoredMode;
     static Phase _phase;
@@ -36,14 +41,24 @@ static class DragSelectWatch
     [ThreadStatic] static int _depth;
 
     static IntPtr _startMethod;
-    static IntPtr _keyMethod;
-    static IntPtr _shiftName;
+    static IntPtr _getKeyDownMethod;
+    static IntPtr _getKeyMethod;
     static IntPtr _keyboardClass;
     static IntPtr _keyboardCurrent;
     static IntPtr _leftShiftMember;
     static bool _leftShiftIsField;
     static int _leftShiftOffset;
     static IntPtr _wasPressedMethod;
+    static IntPtr _isPressedMethod;
+    static IntPtr _selectClass;
+    static IntPtr _dragClass;
+    static readonly int[] _codes = new int[3];
+    static readonly string[] _codeNames = new string[3];
+    static int _codeCount;
+    static bool _cocoaForEdge;
+    static bool _cocoaThrew;
+    static int _probeFrames;
+    static long _nextProbeAt;
     static bool _shiftHeld;
     static string _shiftHow = "";
     static IntPtr _instanceMember;
@@ -93,6 +108,8 @@ static class DragSelectWatch
             }
 
             var drag = FindClass("TPS.Game", "CursorModeGameDragSelect");
+            _dragClass = drag;
+            _selectClass = FindClass("TPS.Game", "CursorModeSelect");
             if (drag == IntPtr.Zero)
             {
                 GiveUp("CursorModeGameDragSelect missing");
@@ -181,6 +198,9 @@ static class DragSelectWatch
                     " param=" + paramName +
                     " instance=" + _instanceHow +
                     " shift=" + _shiftHow +
+                    " argc=" + IL2CPP.il2cpp_method_get_param_count(_startMethod) +
+                    " selectClass=" + (_selectClass == IntPtr.Zero ? "missing" : "ok") +
+                    " mouse=not-required" +
                     " _mode=" + _modeOffset +
                     " _isDragging=" + _draggingOffset +
                     " _itemsSelected=" + _itemsOffset +
@@ -254,22 +274,41 @@ static class DragSelectWatch
         {
             var mode = ReadMode(self);
             var modeName = ClassName(mode);
-            if (_phase != Phase.Idle || IsDragMode(modeName))
+            var modeClass = mode == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(mode);
+            var select = IsSelectMode(modeClass, modeName);
+            if (_phase != Phase.Idle || IsDragMode(mode, modeName))
                 WatchDrag(mode, modeName);
+
+            try
+            {
+                MaybeProbe(modeName, modeClass, select);
+            }
+            catch (Exception ex)
+            {
+                if (!_probeThrew)
+                {
+                    _probeThrew = true;
+                    Plugin.LogSrc.LogError("[MS][select] probe threw: " + ExceptionText.Format(ex));
+                }
+            }
 
             if (_phase != Phase.Idle)
                 return;
-            if (!ShiftPressed())
-                return;
-            if (modeName != "CursorModeSelect")
+            var edge = ShiftPressed(out var down);
+            if (down && !select)
             {
                 if (_ignoredMode == modeName)
                     return;
                 _ignoredMode = modeName;
-                Plugin.LogSrc.LogInfo("[MS][select] shift ignored mode=" + modeName);
+                Plugin.LogSrc.LogInfo(
+                    "[MS][select] shift true mode=" + modeName +
+                    " class=" + modeClass +
+                    " select=" + _selectClass);
                 return;
             }
 
+            if (!edge || !select)
+                return;
             _ignoredMode = null;
             CallStart(self);
         }
@@ -285,7 +324,7 @@ static class DragSelectWatch
 
     static void WatchDrag(IntPtr mode, string modeName)
     {
-        if (!IsDragMode(modeName))
+        if (!IsDragMode(mode, modeName))
         {
             if (_phase == Phase.Dragging)
                 Finish();
@@ -362,17 +401,19 @@ static class DragSelectWatch
             return;
         }
 
-        var after = ClassName(ReadMode(self));
+        var afterPtr = ReadMode(self);
+        var after = ClassName(afterPtr);
         Plugin.LogSrc.LogInfo("[MS][select] after StartGameDragSelect mode=" + after);
-        _phase = after == "CursorModeGameDragSelect" ? Phase.Armed : Phase.Idle;
+        _phase = IsDragMode(afterPtr, after) ? Phase.Armed : Phase.Idle;
         _dragInstance = IntPtr.Zero;
     }
 
-    static bool ShiftPressed()
+    static bool ShiftPressed(out bool down)
     {
+        down = false;
         try
         {
-            var down = ReadShiftDown();
+            down = ReadShiftDown();
             var edge = down && !_shiftHeld;
             _shiftHeld = down;
             return edge;
@@ -391,15 +432,32 @@ static class DragSelectWatch
 
     static bool ReadShiftDown()
     {
-        if (_wasPressedMethod != IntPtr.Zero)
-            return ReadKeyboardEdge();
-        if (_shiftName != IntPtr.Zero)
-            return InvokeBoolObject(_keyMethod, _shiftName);
-        return InvokeBool(_keyMethod, IntPtr.Zero, LeftShift);
+        if (LegacyCodesDown(_getKeyDownMethod) || LegacyCodesDown(_getKeyMethod))
+            return true;
+        if (ReadKeyboard(out var pulsed, out var held) && (pulsed || held))
+            return true;
+        return _cocoaForEdge && CocoaLeft();
     }
 
-    static bool ReadKeyboardEdge()
+    static bool LegacyCodesDown(IntPtr method)
     {
+        if (method == IntPtr.Zero)
+            return false;
+        for (var i = 0; i < _codeCount; i++)
+        {
+            if (InvokeBool(method, IntPtr.Zero, _codes[i]))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool ReadKeyboard(out bool pulsed, out bool held)
+    {
+        pulsed = false;
+        held = false;
+        if (_keyboardCurrent == IntPtr.Zero)
+            return false;
         if (_keyboardClass != IntPtr.Zero)
             IL2CPP.il2cpp_runtime_class_init(_keyboardClass);
         var keyboard = InvokeObject(_keyboardCurrent, IntPtr.Zero);
@@ -410,7 +468,11 @@ static class DragSelectWatch
             : InvokeObject(_leftShiftMember, keyboard);
         if (key == IntPtr.Zero)
             return false;
-        return InvokeBoolZero(_wasPressedMethod, key);
+        if (_wasPressedMethod != IntPtr.Zero)
+            pulsed = InvokeBoolZero(_wasPressedMethod, key);
+        if (_isPressedMethod != IntPtr.Zero)
+            held = InvokeBoolZero(_isPressedMethod, key);
+        return true;
     }
 
     static unsafe bool InvokeBoolZero(IntPtr method, IntPtr obj)
@@ -430,8 +492,28 @@ static class DragSelectWatch
         return Marshal.ReadIntPtr(self, _modeOffset);
     }
 
-    static bool IsDragMode(string name)
-        => name == "CursorModeGameDragSelect";
+    static bool IsDragMode(IntPtr mode, string name)
+    {
+        if (mode != IntPtr.Zero && _dragClass != IntPtr.Zero &&
+            IL2CPP.il2cpp_object_get_class(mode) == _dragClass)
+            return true;
+        return name == "CursorModeGameDragSelect";
+    }
+
+    static bool IsSelectMode(IntPtr klass, string name)
+    {
+        if (klass != IntPtr.Zero && _selectClass != IntPtr.Zero)
+        {
+            var depth = 0;
+            for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+            {
+                if (current == _selectClass)
+                    return true;
+            }
+        }
+
+        return name == "CursorModeSelect";
+    }
 
     static unsafe int ReadCount(IntPtr mode)
     {
@@ -795,28 +877,33 @@ static class DragSelectWatch
 
     static bool TryResolveShift(out string how)
     {
-        how = "";
-        if (TryLegacyShift(out how))
-            return true;
-        if (TryKeyboardShift(out how))
-            return true;
-        how = "missing " + DescribeShiftTypes();
-        return false;
+        var legacyHow = BindLegacy();
+        var codesHow = BindKeyCodes();
+        var hasKeyboard = TryKeyboardShift(out var keyboardHow);
+        var hasLegacyCodes = _codeCount > 0 && (_getKeyDownMethod != IntPtr.Zero || _getKeyMethod != IntPtr.Zero);
+        _cocoaForEdge = !hasKeyboard && !hasLegacyCodes;
+        how = legacyHow + " " + codesHow;
+        if (hasKeyboard)
+            how += " " + keyboardHow;
+        how += _cocoaForEdge ? " edge=cocoa" : " edge=unity";
+        return true;
     }
 
-    static unsafe bool TryLegacyShift(out string how)
+    static unsafe string BindLegacy()
     {
-        how = "";
-        var best = IntPtr.Zero;
-        var bestRank = 0;
-        var bestHow = "";
+        _getKeyDownMethod = IntPtr.Zero;
+        _getKeyMethod = IntPtr.Zero;
+        var downHow = "";
+        var downRank = 0;
+        var keyHow = "";
+        var keyRank = 0;
         var domain = IL2CPP.il2cpp_domain_get();
         if (domain == IntPtr.Zero)
-            return false;
+            return "legacy=domain-missing";
         uint count = 0;
         var assemblies = IL2CPP.il2cpp_domain_get_assemblies(domain, ref count);
         if (assemblies == null)
-            return false;
+            return "legacy=assemblies-missing";
         for (uint i = 0; i < count; i++)
         {
             var image = IL2CPP.il2cpp_assembly_get_image(assemblies[i]);
@@ -825,25 +912,34 @@ static class DragSelectWatch
             var klass = IL2CPP.il2cpp_class_from_name(image, "UnityEngine", "Input");
             if (klass == IntPtr.Zero)
                 continue;
-            if (!TryPickKeyMethod(klass, out var method, out var rank, out var picked))
-                continue;
-            if (rank <= bestRank)
-                continue;
-            best = method;
-            bestRank = rank;
-            bestHow = picked + "@" + (IL2CPP.il2cpp_image_get_name_(image) ?? "?");
+            var imageName = IL2CPP.il2cpp_image_get_name_(image) ?? "?";
+            if (TryPickNamedKey(klass, "GetKeyDown", out var downMethod, out var downNext, out var downLabel) &&
+                downNext > downRank)
+            {
+                _getKeyDownMethod = downMethod;
+                downRank = downNext;
+                downHow = downLabel + "@" + imageName;
+            }
+
+            if (TryPickNamedKey(klass, "GetKey", out var keyMethod, out var keyNext, out var keyLabel) &&
+                keyNext > keyRank)
+            {
+                _getKeyMethod = keyMethod;
+                keyRank = keyNext;
+                keyHow = keyLabel + "@" + imageName;
+            }
         }
 
-        if (best == IntPtr.Zero)
-            return false;
-        _keyMethod = best;
-        _wasPressedMethod = IntPtr.Zero;
-        _shiftName = bestRank == 1 ? IL2CPP.il2cpp_string_new("left shift") : IntPtr.Zero;
-        how = bestHow;
-        return true;
+        if (downHow.Length == 0 && keyHow.Length == 0)
+            return "legacy=missing";
+        if (downHow.Length == 0)
+            return keyHow + " GetKeyDown=missing";
+        if (keyHow.Length == 0)
+            return downHow;
+        return downHow + " " + keyHow;
     }
 
-    static bool TryPickKeyMethod(IntPtr klass, out IntPtr method, out int rank, out string how)
+    static bool TryPickNamedKey(IntPtr klass, string methodName, out IntPtr method, out int rank, out string how)
     {
         method = IntPtr.Zero;
         rank = 0;
@@ -855,9 +951,9 @@ static class DragSelectWatch
             if (current == IntPtr.Zero)
                 break;
             var name = IL2CPP.il2cpp_method_get_name_(current) ?? "";
-            var keyDown = name.Equals("GetKeyDown", StringComparison.Ordinal);
-            var key = name.Equals("GetKey", StringComparison.Ordinal);
-            if (!keyDown && !key)
+            var named = name.Equals(methodName, StringComparison.Ordinal);
+            var intern = methodName == "GetKeyDown" && name.Equals("GetKeyDownInt", StringComparison.Ordinal);
+            if (!named && !intern)
                 continue;
             if (IL2CPP.il2cpp_method_is_instance(current))
                 continue;
@@ -867,34 +963,196 @@ static class DragSelectWatch
             var typeName = type == IntPtr.Zero ? "" : IL2CPP.il2cpp_type_get_name_(type) ?? "";
             var kind = type == IntPtr.Zero ? -1 : IL2CPP.il2cpp_type_get_type(type);
             var keyLike = typeName.IndexOf("KeyCode", StringComparison.Ordinal) >= 0 || kind == 0x11 || kind == 0x55;
-            var stringLike = typeName.IndexOf("String", StringComparison.Ordinal) >= 0 || kind == 0x0E;
-            var next = 0;
-            var label = "";
-            if (keyDown && keyLike)
-            {
-                next = 3;
-                label = "GetKeyDown(KeyCode)";
-            }
-            else if (key && keyLike)
-            {
-                next = 2;
-                label = "GetKey(KeyCode)";
-            }
-            else if (keyDown && stringLike)
-            {
-                next = 1;
-                label = "GetKeyDown(string)";
-            }
-
-            if (next > rank)
-            {
-                rank = next;
-                method = current;
-                how = label;
-            }
+            if (!keyLike)
+                continue;
+            var next = intern ? 2 : 3;
+            if (next <= rank)
+                continue;
+            rank = next;
+            method = current;
+            how = (intern ? "GetKeyDownInt" : methodName) + "(KeyCode)";
         }
 
         return rank > 0 && method != IntPtr.Zero;
+    }
+
+    static unsafe string BindKeyCodes()
+    {
+        _codeCount = 0;
+        var klass = FindNamedFieldClass("UnityEngine", "KeyCode", "LeftShift");
+        if (klass == IntPtr.Zero)
+            return "KeyCode=missing";
+        IL2CPP.il2cpp_runtime_class_init(klass);
+        var text = "";
+        foreach (var name in new[] { "LeftShift", "RightShift", "Shift" })
+        {
+            if (!TryReadStaticInt(klass, name, out var value) || value == 0)
+            {
+                text += " " + name + "=missing";
+                continue;
+            }
+
+            if (_codeCount >= _codes.Length)
+                continue;
+            _codes[_codeCount] = value;
+            _codeNames[_codeCount] = name;
+            _codeCount++;
+            text += " " + name + "=" + value;
+        }
+
+        return text.Length == 0 ? "KeyCode=empty" : text.Trim();
+    }
+
+    static unsafe IntPtr FindNamedFieldClass(string namespaze, string className, string fieldName)
+    {
+        var domain = IL2CPP.il2cpp_domain_get();
+        if (domain == IntPtr.Zero)
+            return IntPtr.Zero;
+        uint count = 0;
+        var assemblies = IL2CPP.il2cpp_domain_get_assemblies(domain, ref count);
+        if (assemblies == null)
+            return IntPtr.Zero;
+        for (uint i = 0; i < count; i++)
+        {
+            var image = IL2CPP.il2cpp_assembly_get_image(assemblies[i]);
+            if (image == IntPtr.Zero)
+                continue;
+            var klass = IL2CPP.il2cpp_class_from_name(image, namespaze, className);
+            if (klass == IntPtr.Zero)
+                continue;
+            if (HasField(klass, fieldName))
+                return klass;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static bool HasField(IntPtr klass, string fieldName)
+    {
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
+            if (field == IntPtr.Zero)
+                return false;
+            if ((IL2CPP.il2cpp_field_get_name_(field) ?? "").Equals(fieldName, StringComparison.Ordinal))
+                return true;
+        }
+    }
+
+    static unsafe bool TryReadStaticInt(IntPtr klass, string fieldName, out int value)
+    {
+        value = 0;
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
+            if (field == IntPtr.Zero)
+                return false;
+            if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) == 0)
+                continue;
+            if (!(IL2CPP.il2cpp_field_get_name_(field) ?? "").Equals(fieldName, StringComparison.Ordinal))
+                continue;
+            var raw = 0;
+            IL2CPP.il2cpp_field_static_get_value(field, &raw);
+            value = raw;
+            return true;
+        }
+    }
+
+    static void MaybeProbe(string modeName, IntPtr modeClass, bool select)
+    {
+        _probeFrames++;
+        var now = Environment.TickCount64;
+        if (_probeFrames > 5 && now < _nextProbeAt)
+            return;
+        _nextProbeAt = now + 1000;
+        CocoaMods(out var cocoaL, out var cocoaR);
+        ReadKeyboard(out var pulsed, out var held);
+        var line =
+            "[MS][select] probe mode=" + modeName +
+            " match=" + (select ? "1" : "0") +
+            " class=" + modeClass +
+            " select=" + _selectClass +
+            " GetKeyDown=" + FormatLegacy(_getKeyDownMethod, false) +
+            " GetKey=" + FormatLegacy(_getKeyMethod, true) +
+            " kbDown=" + (pulsed ? "1" : "0") +
+            " kbHeld=" + (held ? "1" : "0") +
+            " cocoaL=" + (_cocoaThrew ? "threw" : cocoaL ? "1" : "0") +
+            " cocoaR=" + (_cocoaThrew ? "threw" : cocoaR ? "1" : "0") +
+            " argc=" + IL2CPP.il2cpp_method_get_param_count(_startMethod) +
+            " mouse=not-required";
+        if (_probeFrames == 1 &&
+            _getKeyDownMethod == IntPtr.Zero &&
+            _getKeyMethod == IntPtr.Zero &&
+            _keyboardCurrent == IntPtr.Zero)
+            line += DescribeShiftTypes();
+        Plugin.LogSrc.LogInfo(line);
+    }
+
+    static string FormatLegacy(IntPtr method, bool candidates)
+    {
+        if (method == IntPtr.Zero)
+            return "missing";
+        var text = "";
+        for (var i = 0; i < _codeCount; i++)
+        {
+            if (text.Length > 0)
+                text += ",";
+            text += _codeNames[i] + ":" + _codes[i] + ":" + (InvokeBool(method, IntPtr.Zero, _codes[i]) ? "1" : "0");
+        }
+
+        if (candidates)
+        {
+            text = AppendCandidate(text, method, ProbeCandidates0);
+            text = AppendCandidate(text, method, ProbeCandidates1);
+            text = AppendCandidate(text, method, ProbeCandidates2);
+        }
+
+        return text.Length == 0 ? "nocodes" : text;
+    }
+
+    static string AppendCandidate(string text, IntPtr method, int code)
+    {
+        for (var i = 0; i < _codeCount; i++)
+        {
+            if (_codes[i] == code)
+                return text;
+        }
+
+        if (text.Length > 0)
+            text += ",";
+        return text + "n" + code + ":" + (InvokeBool(method, IntPtr.Zero, code) ? "1" : "0");
+    }
+
+    [DllImport("/System/Library/Frameworks/Carbon.framework/Carbon")]
+    static extern uint GetCurrentKeyModifiers();
+
+    static bool CocoaLeft()
+    {
+        return CocoaMods(out var left, out _) && left;
+    }
+
+    static bool CocoaMods(out bool left, out bool right)
+    {
+        left = false;
+        right = false;
+        if (_cocoaThrew)
+            return false;
+        try
+        {
+            var mods = GetCurrentKeyModifiers();
+            var shift = (mods & (uint)CocoaShift) != 0;
+            right = (mods & (uint)CocoaRightShift) != 0;
+            left = shift && !right;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _cocoaThrew = true;
+            Plugin.LogSrc.LogError("[MS][select] cocoa threw: " + ExceptionText.Format(ex));
+            return false;
+        }
     }
 
     static unsafe bool TryKeyboardShift(out string how)
@@ -940,7 +1198,8 @@ static class DragSelectWatch
             if (keyClass == IntPtr.Zero)
                 continue;
             var pressed = FindInstanceZeroArg(keyClass, "get_wasPressedThisFrame");
-            if (pressed == IntPtr.Zero)
+            var held = FindInstanceZeroArg(keyClass, "get_isPressed");
+            if (pressed == IntPtr.Zero && held == IntPtr.Zero)
                 continue;
             _keyboardClass = keyboard;
             _keyboardCurrent = current;
@@ -948,8 +1207,12 @@ static class DragSelectWatch
             _leftShiftIsField = isField;
             _leftShiftOffset = offset;
             _wasPressedMethod = pressed;
-            _keyMethod = IntPtr.Zero;
-            how = "Keyboard.leftShiftKey.wasPressedThisFrame@" + (IL2CPP.il2cpp_image_get_name_(image) ?? "?");
+            _isPressedMethod = held;
+            how = "Keyboard.leftShiftKey." +
+                  (pressed != IntPtr.Zero ? "wasPressedThisFrame" : "") +
+                  (pressed != IntPtr.Zero && held != IntPtr.Zero ? "+" : "") +
+                  (held != IntPtr.Zero ? "isPressed" : "") +
+                  "@" + (IL2CPP.il2cpp_image_get_name_(image) ?? "?");
             return true;
         }
 
@@ -1085,18 +1348,6 @@ static class DragSelectWatch
         }
 
         return IntPtr.Zero;
-    }
-
-    static unsafe bool InvokeBoolObject(IntPtr method, IntPtr arg)
-    {
-        var exc = IntPtr.Zero;
-        var value = arg;
-        var argv = stackalloc void*[1];
-        argv[0] = &value;
-        var ret = IL2CPP.il2cpp_runtime_invoke(method, IntPtr.Zero, argv, ref exc);
-        if (exc != IntPtr.Zero || ret == IntPtr.Zero)
-            return false;
-        return Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0;
     }
 
     static unsafe IntPtr InvokeObject(IntPtr method, IntPtr obj)

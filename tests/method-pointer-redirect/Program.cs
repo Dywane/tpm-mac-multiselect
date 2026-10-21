@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.25"), "version 0.4.25");
+        Expect(plugin.Contains("0.4.26"), "version 0.4.26");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -174,6 +174,11 @@ internal static class Program
         Expect(watch.Contains("leftShiftKey"), "names the Input System shift key");
         Expect(watch.Contains("wasPressedThisFrame"), "names the Input System edge");
         Expect(watch.Contains("DescribeShiftTypes"), "arm miss lists Input classes");
+        Expect(watch.Contains("[MS][select] probe"), "armed watch logs a shift probe");
+        Expect(watch.Contains("get_isPressed"), "reads the Input System held bit");
+        Expect(watch.Contains("GetCurrentKeyModifiers"), "cocoa shift is the last resort");
+        Expect(watch.Contains("shift true mode="), "logs shift when the mode is not select");
+        Expect(watch.Contains("CursorModeSelect"), "names the select mode");
         Expect(watch.Contains("staticFields="), "arm miss lists static fields");
         Expect(!watch.Contains("BuildLogic.<Instance>k__BackingField missing"), "does not abort on the Win backing field");
         Expect(watch.Contains("il2cpp_field_get_offset"), "reads field offsets from metadata");
