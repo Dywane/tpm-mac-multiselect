@@ -545,6 +545,8 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
+**状态（2026-10-21）：** Step 1 已落在 MS **0.4.12**。Step 2 活体 HIT 仍由建造本机按门禁复现。Step 3 随该提交。
+
 **执行方：** demo建造  
 
 **Files:**

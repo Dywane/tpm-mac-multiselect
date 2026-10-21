@@ -1,52 +1,38 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
 using BepInEx.Logging;
-using HarmonyLib;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Runtime;
 using TPS.Game;
 
 namespace TpmMacMultiselect.Hooks;
 
-/// <summary>
-/// ITHM Task4: placement-ready via managed Harmony when Interop stub MethodInfo exists.
-/// Native GameAssembly detours stay default OFF / refused (0.4.2/0.4.6/dobby crash; N1a hang).
-/// PlaceModeFieldPoll is NOT compiled / NOT started (user 2026-10-20: no poll).
-/// Empty interleaved stubs today: AccessTools.Method(OnBecomeActive)=null — we WAIT, we do not pretend.
-/// </summary>
 public static class PlacementReadyHook
 {
     public const string DiagEnvName = "TPM_MS_DIAG_PLACEMENT";
 
-    /// <summary>Candidate enter method names on CursorModePlaceItem (managed stub), preferred first.</summary>
-    static readonly string[] ManagedEnterCandidates =
-    {
-        "OnBecomeActive",
-        "RestartItemPlaceState",
-        "BecomeActive",
-        "OnEnter",
-        "Enter",
-    };
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    delegate void ZeroArgInstance(IntPtr self, IntPtr methodInfo);
 
     public static bool IsPlacementReady { get; private set; }
 
-    /// <summary>True when at least one managed enter MethodInfo was Harmony-patched.</summary>
-    public static bool ManagedEnterPatched { get; private set; }
+    /// <summary>True after OnBecomeActive's method pointer points at <see cref="EnterThunk"/>.</summary>
+    public static bool EnterArmed { get; private set; }
 
     static ManualLogSource Log => Plugin.LogSrc;
     static bool _logged;
     static string _via = "";
-    static string _managedEnterName = "";
     static readonly List<string> _enumerated = new();
+    static ZeroArgInstance? _enterOriginal;
+    static ZeroArgInstance? _enterThunk;
+    [ThreadStatic] static int _enterDepth;
 
-    public static void Apply(HarmonyLib.Harmony harmony)
+    public static void Apply()
     {
-        if (harmony is null)
-            throw new ArgumentNullException(nameof(harmony));
-
         RuntimeHelpers.RunClassConstructor(typeof(CursorModePlaceItem).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(CursorManager).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(BuildLogic).TypeHandle);
@@ -56,55 +42,115 @@ public static class PlacementReadyHook
         EnumerateAndRecord("TPS.Game.BuildLogic", Il2CppClassPointerStore<BuildLogic>.NativeClassPtr);
         WriteTargetEvidence();
 
-        // .ctor(IntPtr) is pure managed wrapper — Il2CppHarmonySupport.TryResolve throws on empty stubs,
-        // so Detach around this patch only.
-        Il2CppHarmonySupportGate.DetachIl2CppResolver();
-        try
-        {
-            var ctor = AccessTools.Constructor(typeof(CursorModePlaceItem), new[] { typeof(IntPtr) });
-            if (ctor is null)
-            {
-                Log.LogError("[MS][hook] CursorModePlaceItem..ctor(IntPtr) not found on stub");
-            }
-            else
-            {
-                harmony.Patch(ctor, prefix: new HarmonyMethod(typeof(PlacementReadyHook), nameof(CtorPrefix)));
-                Log.LogInfo("[MS][hook] patched CursorModePlaceItem..ctor(IntPtr) (managed; Il2Cpp resolver detached)");
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.LogError($"[MS][hook] Harmony ctor patch failed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            try { Il2CppHarmonySupportGate.AttachIl2CppResolver(); }
-            catch { /* best-effort */ }
-        }
-
-        // Enter methods need Il2CppHarmonySupport when stub carries NativeMethodInfoPtr.
-        // Apply with resolver ATTACHED (default after finally above).
-        TryManagedHarmonyEnter(harmony);
-
-        // Native: inventorie + refuse (default OFF). Never auto-apply.
+        TryArmEnterMethodPointer();
         TryDetourEnterLike(Il2CppClassPointerStore<CursorModePlaceItem>.NativeClassPtr, "CursorModePlaceItem");
     }
 
-    static void CtorPrefix(IntPtr pointer)
+    static void EnterThunk(IntPtr self, IntPtr methodInfo)
     {
-        MarkReady("CursorModePlaceItem..ctor(IntPtr)");
+        var orig = _enterOriginal;
+        if (orig is null)
+            return;
+        if (_enterDepth != 0)
+        {
+            orig(self, methodInfo);
+            return;
+        }
+
+        _enterDepth = 1;
+        try
+        {
+            orig(self, methodInfo);
+            MarkReady("CursorModePlaceItem.OnBecomeActive (methodPointer swap)");
+        }
+        finally
+        {
+            _enterDepth = 0;
+        }
     }
 
-    static void ManagedEnterPrefix()
+    static void TryArmEnterMethodPointer()
     {
-        var name = string.IsNullOrEmpty(_managedEnterName) ? "Enter" : _managedEnterName;
-        MarkReady($"CursorModePlaceItem.{name} (managed Harmony Prefix)");
-    }
+        if (EnterArmed)
+            return;
 
-    static void ManagedEnterPostfix()
-    {
-        var name = string.IsNullOrEmpty(_managedEnterName) ? "Enter" : _managedEnterName;
-        MarkReady($"CursorModePlaceItem.{name} (managed Harmony Postfix)");
+        var klass = Il2CppClassPointerStore<CursorModePlaceItem>.NativeClassPtr;
+        var pick = FindZeroArgInstance(klass, "OnBecomeActive");
+        if (pick is null)
+        {
+            Log.LogWarning(
+                "[MS][hook] OnBecomeActive MethodInfo missing; enter not armed. No Dobby. No poll.");
+            return;
+        }
+
+        var method = pick.Value.method;
+        var original = pick.Value.fn;
+        if (!MethodPointerRedirect.TryRead(method, out var atZero) || atZero != original)
+        {
+            Log.LogError(
+                "[MS][hook] REFUSE enter arm: MethodInfo offset 0 != MethodPointer. No prologue rewrite attempted.");
+            return;
+        }
+
+        _enterThunk = EnterThunk;
+        _enterOriginal = Marshal.GetDelegateForFunctionPointer<ZeroArgInstance>(original);
+        var hookPtr = Marshal.GetFunctionPointerForDelegate(_enterThunk);
+        Thread.MemoryBarrier();
+
+        unsafe
+        {
+            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)method);
+            var flags = (ushort)info.Flags;
+            var slot = (int)info.Slot;
+            var virtualHit = false;
+            if (info.VirtualMethodPointer == original)
+            {
+                info.VirtualMethodPointer = hookPtr;
+                virtualHit = true;
+            }
+
+            info.MethodPointer = hookPtr;
+            if (info.MethodPointer != hookPtr ||
+                !MethodPointerRedirect.TryRead(method, out var after) ||
+                after != hookPtr)
+            {
+                info.MethodPointer = original;
+                if (virtualHit)
+                    info.VirtualMethodPointer = original;
+                _enterOriginal = null;
+                _enterThunk = null;
+                Log.LogError(
+                    "[MS][hook] REFUSE enter arm: MethodPointer write did not stick. Restored. No Dobby.");
+                return;
+            }
+
+            EnterArmed = true;
+            var vtableHit = false;
+            try
+            {
+                var klassPtr = info.Class;
+                if (klassPtr != null)
+                {
+                    var nativeKlass = UnityVersionHandler.Wrap(klassPtr);
+                    vtableHit = MethodPointerRedirect.TryRedirectVtableSlot(
+                        nativeKlass.VTable,
+                        slot,
+                        nativeKlass.VtableCount,
+                        original,
+                        hookPtr);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.LogWarning(
+                    $"[MS][hook] method pointer armed; vtable slot left unchanged: {ex.GetType().Name}: {ex.Message}");
+            }
+
+            Log.LogInfo(
+                "[MS][hook] patched CursorModePlaceItem.OnBecomeActive " +
+                $"(methodPointer swap; vtableSlot={vtableHit}; virtualMethodPointer={virtualHit}; " +
+                $"slot={slot}; flags=0x{flags:X4}; no GameAssembly prologue rewrite)");
+        }
     }
 
     internal static void MarkReady(string via)
@@ -115,70 +161,6 @@ public static class PlacementReadyHook
         _logged = true;
         _via = via;
         Log.LogInfo($"[MS][hook] PLACEMENT_READY via={via}");
-    }
-
-    /// <summary>
-    /// Primary enter path: managed Harmony Prefix+Postfix when stub MethodInfo exists.
-    /// Does NOT invent methods — empty interleaved stub → WAITING_FOR_STUB_METHODINFO.
-    /// </summary>
-    static void TryManagedHarmonyEnter(HarmonyLib.Harmony harmony)
-    {
-        var stubType = typeof(CursorModePlaceItem);
-        var declared = stubType.GetMethods(
-            BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-        var ptrFields = stubType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-        var nPtr = 0;
-        foreach (var f in ptrFields)
-        {
-            if (f.Name.StartsWith("NativeMethodInfoPtr", StringComparison.Ordinal))
-                nPtr++;
-        }
-
-        MethodInfo? method = null;
-        string? hitName = null;
-        foreach (var name in ManagedEnterCandidates)
-        {
-            var m = AccessTools.Method(stubType, name);
-            if (m is null)
-                continue;
-            method = m;
-            hitName = name;
-            break;
-        }
-
-        if (method is null || hitName is null)
-        {
-            Log.LogWarning(
-                "[MS][hook] WAITING_FOR_STUB_METHODINFO — CursorModePlaceItem managed enter MethodInfo still missing. " +
-                $"tried=[{string.Join(", ", ManagedEnterCandidates)}]; " +
-                $"declaredMethods={declared.Length}, NativeMethodInfoPtr*={nPtr}; " +
-                "empty interleaved TPS.Game stub. NativeDetour default OFF (banned). Poll not used. " +
-                "Interop must regenerate stub with OnBecomeActive (or RestartItemPlaceState) + NativeMethodInfoPtr before PLACEMENT_READY via managed Harmony.");
-            ManagedEnterPatched = false;
-            return;
-        }
-
-        // MethodInfo present — patch with Il2Cpp resolver attached (Apply already re-attached).
-        _managedEnterName = hitName;
-        try
-        {
-            harmony.Patch(
-                method,
-                prefix: new HarmonyMethod(typeof(PlacementReadyHook), nameof(ManagedEnterPrefix)),
-                postfix: new HarmonyMethod(typeof(PlacementReadyHook), nameof(ManagedEnterPostfix)));
-            ManagedEnterPatched = true;
-            Log.LogInfo(
-                $"[MS][hook] patched CursorModePlaceItem.{hitName} (managed Harmony Prefix+Postfix; " +
-                $"declaredMethods={declared.Length}, NativeMethodInfoPtr*={nPtr}; Il2Cpp resolver attached)");
-        }
-        catch (Exception ex)
-        {
-            ManagedEnterPatched = false;
-            Log.LogError(
-                $"[MS][hook] managed Harmony {hitName} FAILED: {ex.GetType().Name}: {ex.Message}. " +
-                "Stub MethodInfo exists but patch threw — check Il2CppHarmonySupport / op_Equality; " +
-                "do NOT fall back to NativeDetour.");
-        }
     }
 
     static void TryDetourEnterLike(IntPtr klass, string typeLabel)
@@ -228,7 +210,7 @@ public static class PlacementReadyHook
             {
                 Log.LogInfo(
                     $"[MS][hook] enter-like seen {typeLabel}.{c.name} fn=0x{c.fn.ToInt64():X} " +
-                    $"(inventory only; nativeDetourBanned={IsNativeDetourBanned(c.name)}; managedPatched={ManagedEnterPatched})");
+                    $"(inventory only; nativeDetourBanned={IsNativeDetourBanned(c.name)}; enterArmed={EnterArmed})");
             }
         }
 
@@ -239,7 +221,7 @@ public static class PlacementReadyHook
         {
             Log.LogWarning(
                 $"[MS][hook][diag] {DiagEnvName}={diagMode} REFUSED — all native enter diag paths retired " +
-                "(OnBecomeActive crash / RestartItemPlaceState hang). Primary path = managed Harmony after Interop stub fix.");
+                "(OnBecomeActive crash / RestartItemPlaceState hang). Primary path = method-pointer swap.");
         }
 
         foreach (var c in candidates)
@@ -252,16 +234,16 @@ public static class PlacementReadyHook
             }
         }
 
-        if (ManagedEnterPatched)
+        if (EnterArmed)
         {
             Log.LogInfo(
-                $"[MS][hook] native enter default OFF on {typeLabel} (managed Harmony already armed — preferred path).");
+                $"[MS][hook] native prologue rewrite OFF on {typeLabel} (method pointer already armed).");
         }
         else
         {
             Log.LogWarning(
-                $"[MS][hook] no native enter hook on {typeLabel} (default OFF). " +
-                "PLACEMENT_READY stays MISS until Interop stub MethodInfo exists for managed Harmony.");
+                $"[MS][hook] enter not armed on {typeLabel}. " +
+                "PLACEMENT_READY stays MISS. Prologue rewrite stays OFF.");
         }
     }
 
@@ -277,7 +259,7 @@ public static class PlacementReadyHook
         var p = pick.Value;
         Log.LogInfo(
             $"[MS][hook] N1a candidate {typeLabel}.{p.name} fn=0x{p.fn.ToInt64():X} " +
-            "(argc=0 instance; native default OFF; managed Harmony will use this name if stub MethodInfo appears)");
+            "(argc=0 instance; native default OFF; not the enter arm)");
     }
 
     static (string name, IntPtr method, IntPtr fn)? FindZeroArgInstance(IntPtr klass, string methodName)
@@ -318,7 +300,6 @@ public static class PlacementReadyHook
     {
         if (string.IsNullOrEmpty(name))
             return true;
-        // Ban ALL native enter detours after crash/hang series — managed Harmony only.
         if (name.Equals("OnBecomeActive", StringComparison.Ordinal))
             return true;
         if (name.Equals("BecomeActive", StringComparison.Ordinal))
@@ -438,10 +419,9 @@ public static class PlacementReadyHook
                 sw.WriteLine();
                 sw.WriteLine("| 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |");
                 sw.WriteLine("|------|--------|------------|------|----------|");
-                sw.WriteLine("| enter place (managed PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState / … | Harmony Prefix+Postfix **when** stub MethodInfo non-null; else WAITING_FOR_STUB_METHODINFO |");
-                sw.WriteLine("| enter place (managed wrapper) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | .ctor(IntPtr) | Always patchable; fires on wrapper birth — not reliable place-enter |");
-                sw.WriteLine("| enter place (native) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | **DEFAULT OFF / REFUSED** — crash/hang series. Never default ON. |");
-                sw.WriteLine("| enter place (poll) | — | — | — | **Retired** (user 2026-10-20: no poll) |");
+                sw.WriteLine("| enter place (PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive | MethodInfo.methodPointer swap, plus vtable slot when that slot still holds the same pointer. No GameAssembly prologue rewrite. |");
+                sw.WriteLine("| enter place (native prologue) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | OFF. Dobby and Abs64 both failed this gate. |");
+                sw.WriteLine("| enter place (poll) | — | — | — | Retired (user 2026-10-20: no poll) |");
                 sw.WriteLine();
                 sw.WriteLine("## Runtime method enumeration (sample)");
                 sw.WriteLine();

@@ -1,13 +1,17 @@
 # ITHM Task4 — placement hook target
 
-Generated: 2026-10-20 18:39:52 Asia/Shanghai (box-local)
+Generated: 2026-10-21 10:43:53 Asia/Shanghai (box-local)
+
+**Current PRIMARY (MS 0.4.11):** methodPointer swap on `TPS.Game.CursorModePlaceItem.OnBecomeActive` (+ matching vtable slot). Prologue rewrite / Harmony.Patch OnBecomeActive OFF.
+
+- Cold-start PASS: `docs/evidence/ithm-0.4.11-methodpointer-smoke.md` (`8c5a6db`)
+- Placement / `PLACEMENT_READY` **field PASS**: `docs/evidence/ithm-0.4.11-placement-ready-20261021.md` (LogOutput mtime 2026-10-21 10:44:26 Asia/Shanghai; via=`CursorModePlaceItem.OnBecomeActive (methodPointer swap)`; no enter-side Dobby C12)
 
 | 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |
 |------|--------|------------|------|----------|
-| enter place (managed PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState / … | Harmony Prefix+Postfix **when** stub MethodInfo non-null; else WAITING_FOR_STUB_METHODINFO |
-| enter place (managed wrapper) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | .ctor(IntPtr) | Always patchable; fires on wrapper birth — not reliable place-enter |
-| enter place (native) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | **DEFAULT OFF / REFUSED** — crash/hang series. Never default ON. |
-| enter place (poll) | — | — | — | **Retired** (user 2026-10-20: no poll) |
+| enter place (PRIMARY) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive | MethodInfo.methodPointer swap, plus vtable slot when that slot still holds the same pointer. No GameAssembly prologue rewrite. |
+| enter place (native prologue) | TPS.Game.dll | TPS.Game.CursorModePlaceItem | OnBecomeActive / RestartItemPlaceState | OFF. Dobby and Abs64 both failed this gate. |
+| enter place (poll) | — | — | — | Retired (user 2026-10-20: no poll) |
 
 ## Runtime method enumeration (sample)
 

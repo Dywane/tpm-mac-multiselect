@@ -2,6 +2,7 @@ using System;
 using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using Il2CppInterop.Runtime.Injection;
 using TpmMacIl2CppHost;
 using TpmMacMultiselect.BuildActions;
 using TpmMacMultiselect.Hooks;
@@ -14,15 +15,9 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    /// <summary>
-    /// ITHM Task4: managed Harmony enter when stub MethodInfo exists; else WAITING_FOR_STUB_METHODINFO.
-    /// Native detour default OFF / refused. Poll not used. Task5 not opened.
-    /// </summary>
-    public const string PluginVersion = "0.4.10";
+    public const string PluginVersion = "0.4.12";
 
     internal static ManualLogSource LogSrc = null!;
-
-    internal static HarmonyLib.Harmony? SharedHarmony { get; private set; }
 
     internal static IItemSelectionBridge? Bridge { get; private set; }
 
@@ -31,11 +26,11 @@ public class Plugin : BasePlugin
         LogSrc = Log;
         Log.LogInfo(
             $"{PluginName} {PluginVersion} loaded " +
-            "(ithm: managed-Harmony-await-stub; native enter default OFF; poll retired; Task5 closed)");
+            "(ithm: method-pointer enter; hover field read; prologue rewrite OFF; poll retired)");
 
         Log.LogInfo(
             "[MS] PlaceModeFieldPoll not started (user: no poll); " +
-            "native enter detour default OFF; primary = managed Harmony when Interop stub MethodInfo exists");
+            "GameAssembly prologue rewrite OFF; primary = OnBecomeActive method-pointer swap");
 
         var host = HostFacade.Host;
         if (host is null || !host.Ready)
@@ -50,29 +45,38 @@ public class Plugin : BasePlugin
             return;
         }
 
-        var harmony = host.SharedHarmony;
-        if (harmony is null)
+        if (host.SharedHarmony is null)
         {
             Log.LogError("[MS] SharedHarmony null while Ready; gameplay disabled (safe fail)");
             return;
         }
 
-        SharedHarmony = harmony;
         Log.LogInfo("[MS] host ready / Kind=Interop / SharedHarmony acquired");
 
         Bridge = new Il2CppItemSelectionBridge(Log);
-        Log.LogInfo("[MS] Il2CppItemSelectionBridge constructed (skeleton; Task5–8 pending)");
+        Log.LogInfo("[MS] Il2CppItemSelectionBridge constructed (hover wired; Task6–8 pending)");
 
         try
         {
-            PlacementReadyHook.Apply(harmony);
+            PlacementReadyHook.Apply();
             Log.LogInfo(
                 "[MS] PlacementReadyHook.Apply done " +
-                $"(managedEnterPatched={PlacementReadyHook.ManagedEnterPatched}; native default OFF)");
+                $"(enterArmed={PlacementReadyHook.EnterArmed}; prologue rewrite OFF)");
         }
         catch (Exception ex)
         {
             Log.LogError($"[MS] PlacementReadyHook.Apply failed: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            ClassInjector.RegisterTypeInIl2Cpp<HoverWatch>();
+            AddComponent<HoverWatch>();
+            Log.LogInfo("[MS][hover] HoverWatch armed (samples after PLACEMENT_READY)");
+        }
+        catch (Exception ex)
+        {
+            Log.LogError($"[MS][hover] HoverWatch failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 }

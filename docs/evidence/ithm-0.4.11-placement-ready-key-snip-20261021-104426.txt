@@ -1,0 +1,39 @@
+168:[Message:   BepInEx] Chainloader initialized
+170:[Debug  :DobbyDetour] Preparing detour from 0x128C87383 to 0x1393E3164
+171:[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x134ED7000
+172:[Debug  :DobbyDetour] Original: 128C87383, Trampoline: 134ED7000, diff: C24FC7D
+175:[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+176:[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+177:[Info   :TPM Mac IL2CPP Host] [HOST] Kernel.Kind config=Interop → Interop (default=Interop)
+178:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=True HostFacade.Ready=True — OK Il2CppSystem.String fields=18 methods=18 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+179:[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=true
+180:[Info   :TPM Mac IL2CPP Host] [HOST] SharedHarmony id=com.tpm.mac.il2cpp-host.shared Ready=True
+181:[Info   :TPM Mac IL2CPP Host] [HOST][harmony] smoke ok
+182:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok ns=System name=String → Il2CppSystem.String handle valid; OK Il2CppSystem.String fields=18 methods=18 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+183:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryInvoke op_Implicit("a10") → true (RuntimeObjectHandle)
+184:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetField isWrapped → true value=False
+185:[Info   :TPM Mac IL2CPP Host] [RT] smoke TrySetField isWrapped=False → true (idempotent rewrite)
+186:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetTypeName → true name=Il2CppSystem.String
+187:[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryFindObject: NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve
+188:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryFindObject → false (NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve)
+189:[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok image=TPS.Game ns=TPS.Game name=BuildMode
+190:[Info   :   BepInEx] Loading [TPM Mac Multi-Select 0.4.11]
+191:[Info   :TPM Mac Multi-Select] TPM Mac Multi-Select 0.4.11 loaded (ithm: method-pointer enter; prologue rewrite OFF; poll retired; Task5 closed)
+192:[Info   :TPM Mac Multi-Select] [MS] PlaceModeFieldPoll not started (user: no poll); GameAssembly prologue rewrite OFF; primary = OnBecomeActive method-pointer swap
+193:[Info   :TPM Mac Multi-Select] [MS] host ready / Kind=Interop / SharedHarmony acquired
+194:[Info   :TPM Mac Multi-Select] [MS][bridge] Il2Cpp* types bound: CursorManager=TPS.Game.CursorManager, PlaceItem=TPS.Game.CursorModePlaceItem, BuildLogic=TPS.Game.BuildLogic, Il2CppObject=Il2CppSystem.Object, UnityObject=UnityEngine.Object
+195:[Info   :TPM Mac Multi-Select] [MS] Il2CppItemSelectionBridge constructed (skeleton; Task5–8 pending)
+386:[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 118 methods on TPS.Game.CursorModePlaceItem
+387:[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 89 methods on TPS.Game.CursorManager
+388:[Info   :TPM Mac Multi-Select] [MS][hook] enumerated 139 methods on TPS.Game.BuildLogic
+389:[Info   :TPM Mac Multi-Select] [MS][hook] wrote target evidence → /Users/weidu/Documents/Project/tpm-mac-multiselect/docs/evidence/ithm-placement-hook-target.md
+390:[Info   :TPM Mac Multi-Select] [MS][hook] patched CursorModePlaceItem.OnBecomeActive (methodPointer swap; vtableSlot=True; virtualMethodPointer=True; slot=6; flags=0x00C6; no GameAssembly prologue rewrite)
+391:[Info   :TPM Mac Multi-Select] [MS][hook] enter-like seen CursorModePlaceItem.OnBecomeActive fn=0x1393E31A4 (inventory only; nativeDetourBanned=True; enterArmed=True)
+392:[Info   :TPM Mac Multi-Select] [MS][hook] enter-like seen CursorModePlaceItem.RestartItemPlaceState fn=0x12A3368D1 (inventory only; nativeDetourBanned=True; enterArmed=True)
+393:[Info   :TPM Mac Multi-Select] [MS][hook] N1a candidate CursorModePlaceItem.RestartItemPlaceState fn=0x12A3368D1 (argc=0 instance; native default OFF; not the enter arm)
+394:[Warning:TPM Mac Multi-Select] [MS][hook] SKIP NativeDetour CursorModePlaceItem.OnBecomeActive — banned (0.4.2/0.4.6/dobby FAIL). N1a RestartItemPlaceState also REFUSED after hang. Native enter remains default OFF.
+395:[Warning:TPM Mac Multi-Select] [MS][hook] SKIP NativeDetour CursorModePlaceItem.RestartItemPlaceState — banned (0.4.2/0.4.6/dobby FAIL). N1a RestartItemPlaceState also REFUSED after hang. Native enter remains default OFF.
+396:[Info   :TPM Mac Multi-Select] [MS][hook] native prologue rewrite OFF on CursorModePlaceItem (method pointer already armed).
+397:[Info   :TPM Mac Multi-Select] [MS] PlacementReadyHook.Apply done (enterArmed=True; prologue rewrite OFF)
+398:[Message:   BepInEx] Chainloader startup complete
+399:[Info   :TPM Mac Multi-Select] [MS][hook] PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)

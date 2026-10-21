@@ -74,25 +74,50 @@
 
 ---
 
-## Task 4 — PlacementReadyHook（CODE+DEPLOY MS **0.4.6** formal fptr ON；cold place evidence **PENDING**；§4.5 **不勾**）
+## Task 4 — PlacementReadyHook（MS **0.4.11** methodPointer swap；§4.5 **PASS**；**允许开 Task5**）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 目标钉名 | PlaceItem `.ctor(IntPtr)` + native `OnBecomeActive` | `docs/evidence/ithm-placement-hook-target.md` |
-| Crash root cause | 0.4.2 used `NativeDetour(IntPtr, Delegate)` → `GetNativeStart` (JIT) | `ithm-onbecomeactive-crash-rootcause.md` |
-| Formal NativeDetour | `GetFunctionPointerForDelegate` + `NativeDetour(IntPtr, IntPtr)`; trampoline-first | `Hooks/PlacementReadyHook.cs` @ 0.4.6 |
-| Default | **ON** (not diag-only) | PluginVersion 0.4.6 |
-| Contrast | `TPM_MS_DIAG_PLACEMENT=off` skips Detour | same |
-| Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart path | never fall back |
-| Poll | PlaceModeFieldPoll **Compile Remove** (user: no poll) | csproj |
-| Managed Harmony | 0.4.10: try enter candidates → stub missing → **WAITING_FOR_STUB_METHODINFO**; patch Prefix+Postfix when MethodInfo non-null; native default OFF | empty interleaved TPS.Game (Interop owes stub) |
-| 冷启放置摘录 | **PENDING** user：冷启→进放置→`PLACEMENT_READY via=…(fptr)` | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` |
-| 版本 | Multiselect **0.4.6**（Host **0.4.0**） | PluginVersion；plugins 仅换 MS DLL |
+| 目标钉名 | PRIMARY = `CursorModePlaceItem.OnBecomeActive` methodPointer swap（现场已验） | `docs/evidence/ithm-placement-hook-target.md` |
+| Enter arm | **0.4.11 methodPointer swap 冷启 PASS** — `enterArmed=True`；`WAITING_FOR_STUB_METHODINFO` **已过**；prologue rewrite / `Harmony.Patch` OnBecomeActive **OFF**（HarmonySupport→Dobby 硬退） | `docs/evidence/ithm-0.4.11-methodpointer-smoke.md`（commit `8c5a6db`） |
+| Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart；enter 侧 Dobby/Abs64 prologue | never fall back |
+| Poll | PlaceModeFieldPoll **Compile Remove**（user: no poll） | csproj |
+| 放置摘录 §4.5 | **PASS** — `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`；无 enter 侧 Dobby C12 | `docs/evidence/ithm-0.4.11-placement-ready-20261021.md`（LogOutput mtime 2026-10-21 10:44:26 Asia/Shanghai） |
+| 版本 | Multiselect **0.4.11** / Host **0.4.0**。Hover 版本见 Task 5。 | PluginVersion；plugins 仅换 MS DLL |
+| 历史 | 0.4.5 diag-only fptr → 0.4.6 formal fptr ON 曾为主路径；现已让位 methodPointer swap | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` 等 |
 
-**判据：** 规格 §4.5 — **仍不勾**（等用户放置取证）。0.4.5 为 diag-only fptr；0.4.6 正式默认开启同一安全 API。若进放置仍硬崩 → H1 不足（Rosetta/ABI），停并写清，**勿**重挂 Delegate 重载；**勿开 Task5**。
+**判据：** 规格 §4.5 — **已勾 PASS**。主路径仍为 methodPointer swap。**允许开 Task5**。进放置若后续硬崩 → 停并写清，**勿**重挂 Harmony.Patch / Delegate NativeDetour。
 
 ---
 
-## Task 5+（demo建造）
+## Task 5 — hover（MS **0.4.12** 代码已接；活体 HIT **待建造本机**）
 
-hover / pickup / rotate / delete — 见计划 T5–8；**建议等 Task4 冷启动 PLACEMENT_READY 摘录后再开 Task5。**
+| 项 | 期望 | evidence |
+|----|------|----------|
+| 读法 | 直读 `WorldCursorState._instance`，再读 `_elementWithFocus`，否则 `_previouslyFocusedElement` | `Il2CppItemSelectionBridge.TryGetHoveredSelectable` |
+| 禁止 | `IRuntimeBridge.TryInvoke` 主路径。不改 OnBecomeActive 序言。不恢复 poll。 | 源码 |
+| 取样 | `HoverWatch` 在 `IsPlacementReady` 之后每帧读一次。同一指针只打一行 HIT。 | `Hooks/HoverWatch.cs` |
+| 版本 | Multiselect **0.4.12** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 活体 | 至少一行 `[MS][hover] HIT type=` | 待 `docs/evidence/ithm-hover-x64.log` |
+
+### 建造本机复现
+
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。
+
+```bash
+export PATH="$HOME/.dotnet:$PATH"
+dotnet build plugins/multiselect/TpmMacMultiselect.csproj -c Release
+```
+
+把 `plugins/multiselect/bin/Release/TpmMacMultiselect.dll` 拷到游戏 `BepInEx/plugins/`。从游戏根目录运行 `./run_bepinex.sh`。
+
+1. 进入关卡。
+2. 打开建造，进入物品放置。
+3. 确认 `BepInEx/LogOutput.log` 有 `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`。
+4. 把光标移到一个可选物件上。
+5. 在同一份日志里找 `[MS][hover] HIT type=`。`field=` 应为 `_elementWithFocus` 或 `_previouslyFocusedElement`。
+6. 把含 HIT 的日志摘到 `docs/evidence/ithm-hover-x64.log`。
+
+没有 HIT 时，日志里会有一行 `[MS][hover] MISS reason=`。把那一行一并摘录。不要把 MISS 当成 §4.6 hover 通过。
+
+`ECCursorSelectable` 和 `ECHeldOnCursor` 只有类型解析，没有已验证字段名，所以这条读路径不用它们。Task 6 到 Task 8 仍未接线。
