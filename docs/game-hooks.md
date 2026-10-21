@@ -1,6 +1,7 @@
 # game-hooks（TPM Mac 多选）
 
-> **ITHM Task4（2026-10-20）：** `PlacementReadyHook` MS **0.4.11** — primary **OnBecomeActive method-pointer swap** (no GameAssembly prologue rewrite). Dobby/Abs64 stay OFF. Poll retired. Evidence `docs/evidence/ithm-0.4.11-methodpointer-enter.md`. Task5 不开。PRM WAITING_LEVEL 仍冻结。
+> **ITHM Task5（2026-10-21）：** MS **0.4.12** hover 读 `TPS.Game.UI.WorldCursorState` 字段 `_instance`，再读 `_elementWithFocus`，空则读 `_previouslyFocusedElement`。主路径不是 `IRuntimeBridge.TryInvoke`。`HoverWatch.Update` 在 `PLACEMENT_READY` 之后取样。成功日志 `[MS][hover] HIT type=`。活体 HIT 由建造本机按 `docs/evidence/ithm-hover-0.4.12.md` 摘录。OnBecomeActive 仍是 methodPointer swap。Poll 与 prologue rewrite 保持关闭。
+> **ITHM Task4（2026-10-21）：** `PlacementReadyHook` MS **0.4.11** methodPointer swap。§4.5 **PASS**。日志 `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`。Evidence `docs/evidence/ithm-0.4.11-placement-ready-20261021.md`。Dobby/Abs64 stay OFF. Poll retired. PRM WAITING_LEVEL 仍冻结。
 > **本刀权威路径（2026-10-20 Asia/Shanghai）：** Interop 瘦 Host + Multiselect **直绑** `Il2Cpp*` — 见 `docs/plans/tpm-mac-interop-thin-host-multiselect-plan.md` / 门禁 `docs/interop-thin-host-multiselect-gate.md`。  
 > **冻结：** 旧 PRM（`tpm-mac-plugin-runtime-multiselect`）/ `IRuntimeBridge` 玩法门面 / CAPI / `WAITING_LEVEL` 盲轮询 **不作本刀验收**。下文 PRM 段仅作史实归档。
 

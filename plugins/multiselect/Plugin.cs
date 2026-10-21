@@ -2,6 +2,7 @@ using System;
 using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using Il2CppInterop.Runtime.Injection;
 using TpmMacIl2CppHost;
 using TpmMacMultiselect.BuildActions;
 using TpmMacMultiselect.Hooks;
@@ -14,7 +15,7 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    public const string PluginVersion = "0.4.11";
+    public const string PluginVersion = "0.4.12";
 
     internal static ManualLogSource LogSrc = null!;
 
@@ -25,7 +26,7 @@ public class Plugin : BasePlugin
         LogSrc = Log;
         Log.LogInfo(
             $"{PluginName} {PluginVersion} loaded " +
-            "(ithm: method-pointer enter; prologue rewrite OFF; poll retired; Task5 closed)");
+            "(ithm: method-pointer enter; hover field read; prologue rewrite OFF; poll retired)");
 
         Log.LogInfo(
             "[MS] PlaceModeFieldPoll not started (user: no poll); " +
@@ -53,7 +54,7 @@ public class Plugin : BasePlugin
         Log.LogInfo("[MS] host ready / Kind=Interop / SharedHarmony acquired");
 
         Bridge = new Il2CppItemSelectionBridge(Log);
-        Log.LogInfo("[MS] Il2CppItemSelectionBridge constructed (skeleton; Task5–8 pending)");
+        Log.LogInfo("[MS] Il2CppItemSelectionBridge constructed (hover wired; Task6–8 pending)");
 
         try
         {
@@ -65,6 +66,17 @@ public class Plugin : BasePlugin
         catch (Exception ex)
         {
             Log.LogError($"[MS] PlacementReadyHook.Apply failed: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            ClassInjector.RegisterTypeInIl2Cpp<HoverWatch>();
+            AddComponent<HoverWatch>();
+            Log.LogInfo("[MS][hover] HoverWatch armed (samples after PLACEMENT_READY)");
+        }
+        catch (Exception ex)
+        {
+            Log.LogError($"[MS][hover] HoverWatch failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 }
