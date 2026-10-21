@@ -6,7 +6,6 @@ using BepInEx.Logging;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppInterop.Runtime.Runtime;
-using Il2CppSystem;
 using TPS.Game;
 using TPS.Game.UI;
 using TpmMacMultiselect.Hooks;
