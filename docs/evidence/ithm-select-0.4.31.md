@@ -1,3 +1,5 @@
+Do not deploy this build. The allow invoke no longer crashed, but `PlaceItem` returned in `CursorModeSelect`, `dragMode=missing`, and `suppress restored` ran before PlaceItem. `b__76_0` then opened the delete dialog. MS 0.4.32 calls PlaceItem on the BuildLogic instance and holds the prompt stubs until place mode. See `docs/evidence/ithm-select-0.4.32.md`.
+
 # ITHM Task5 skip the crashing allow check (MS 0.4.31)
 
 **MS:** 0.4.31

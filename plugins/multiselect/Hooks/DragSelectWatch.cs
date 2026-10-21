@@ -127,8 +127,12 @@ static class DragSelectWatch
     static bool _buildInited;
     static int _dragModeOffset;
     static int _dragModeKind = -1;
+    static IntPtr _dragModeField;
     static int _foundationsOffset;
     static int _foundationsKind = -1;
+    static IntPtr _foundationsField;
+    static bool _suppressUntilPlace;
+    static bool _finishBlocked;
     static IntPtr _resetMethod;
     static int _resetArgs = -1;
     static IntPtr _cancelMethod;
@@ -425,6 +429,17 @@ static class DragSelectWatch
 
     static void WatchDrag(IntPtr cursor, IntPtr mode, string modeName)
     {
+        if (_finishBlocked)
+        {
+            if (!IsDragMode(mode, modeName))
+                _finishBlocked = false;
+            else
+            {
+                _phase = Phase.Idle;
+                return;
+            }
+        }
+
         if (!IsDragMode(mode, modeName))
         {
             if (_phase == Phase.Dragging)
@@ -487,11 +502,23 @@ static class DragSelectWatch
 
             PrepareExit(drag);
             InvokeCancelBuild();
-            RestorePromptsIfLeft(cursor);
+            var placed = false;
             if (leader == IntPtr.Zero)
                 Plugin.LogSrc.LogInfo("[MS][select] PlaceItem skipped empty");
             else
-                PlaceLeader(cursor, leader, mgr);
+                placed = PlaceLeader(cursor, leader);
+            if (placed)
+                RestorePrompt();
+            else if (leader != IntPtr.Zero)
+            {
+                var failedMode = ClassName(ReadMode(cursor));
+                Plugin.LogSrc.LogError("[MS][select] ERROR mode=" + failedMode + " after PlaceItem");
+                if (mgr != IntPtr.Zero)
+                    InvokeClear(mgr);
+                _finishBlocked = true;
+            }
+            else if (!IsDragMode(ReadMode(cursor), ClassName(ReadMode(cursor))))
+                RestorePrompt();
             LogCheckPromptMiss();
         }
         finally
@@ -551,6 +578,7 @@ static class DragSelectWatch
         else
         {
             _phase = Phase.Armed;
+            _finishBlocked = false;
             NoteDragEntered(afterPtr);
         }
         _dragInstance = IntPtr.Zero;
@@ -1814,6 +1842,7 @@ static class DragSelectWatch
         _promptInstalled = armed > 0;
         if (!_promptInstalled)
             return;
+        _suppressUntilPlace = true;
         Plugin.LogSrc.LogInfo(
             "[MS][select] suppress hit n=" + armed +
             " vtableHits=" + vtableHits +
@@ -1900,7 +1929,7 @@ static class DragSelectWatch
 
     static void HoldOrRestore()
     {
-        if (_finishing || !_promptInstalled)
+        if (_finishing || !_promptInstalled || _suppressUntilPlace)
             return;
         _framesOutside++;
         if (_framesOutside < 2)
@@ -1917,6 +1946,7 @@ static class DragSelectWatch
 
     static void RestorePrompt()
     {
+        _suppressUntilPlace = false;
         if (!_promptInstalled)
             return;
         unsafe
@@ -2526,21 +2556,12 @@ static class DragSelectWatch
 
     static string BindExit(IntPtr drag, IntPtr build)
     {
-        if (TryFindInstanceField(drag, "_openFoundationsMenuOnExit", out _foundationsOffset, out _))
-            _foundationsKind = FieldKind(drag, "_openFoundationsMenuOnExit");
-        else
-        {
-            _foundationsOffset = 0;
-            _foundationsKind = -1;
-        }
-
-        if (TryFindInstanceField(drag, "_dragSelectMode", out _dragModeOffset, out _))
-            _dragModeKind = FieldKind(drag, "_dragSelectMode");
-        else
-        {
-            _dragModeOffset = 0;
-            _dragModeKind = -1;
-        }
+        _foundationsField = FindNamedField(drag, "_openFoundationsMenuOnExit");
+        _foundationsOffset = FieldOffset(_foundationsField);
+        _foundationsKind = _foundationsField == IntPtr.Zero ? -1 : KindOf(_foundationsField);
+        _dragModeField = FindNamedField(drag, "_dragSelectMode");
+        _dragModeOffset = FieldOffset(_dragModeField);
+        _dragModeKind = _dragModeField == IntPtr.Zero ? -1 : KindOf(_dragModeField);
 
         _resetMethod = FindInstanceZeroArg(drag, "ResetDragCursorIcon");
         _resetArgs = _resetMethod != IntPtr.Zero ? 0 : -1;
@@ -2560,8 +2581,8 @@ static class DragSelectWatch
         if (_gateMethod == IntPtr.Zero && utils != IntPtr.Zero)
             _gateMethod = FindZeroArg(utils, "IsLevelEditorGroupSelectionAllowed", false);
         _placeClass = FindClass("TPS.Game", "CursorModePlaceItem");
-        return "foundations=" + (_foundationsOffset >= MinInstanceOffset) +
-               " dragMode=" + (_dragModeOffset >= MinInstanceOffset) +
+        return "foundations=" + (_foundationsField == IntPtr.Zero ? "missing" : _foundationsOffset + "/k" + _foundationsKind) +
+               " dragMode=" + (_dragModeField == IntPtr.Zero ? "missing" : _dragModeOffset + "/k" + _dragModeKind) +
                " reset=" + (_resetMethod == IntPtr.Zero ? "missing" : _resetArgs.ToString()) +
                " cancel=" + (_cancelMethod == IntPtr.Zero ? "missing" : (_cancelStatic ? "static" : "instance")) +
                " place=" + (_placeMethod == IntPtr.Zero ? "missing" : (_placeStatic ? "static/" : "instance/") + _placeObjectSlot) +
@@ -2594,10 +2615,6 @@ static class DragSelectWatch
         var depth = 0;
         for (var current = build; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
         {
-            var found = IntPtr.Zero;
-            var count = 0;
-            var slot = -1;
-            var isStatic = false;
             var iter = IntPtr.Zero;
             while (true)
             {
@@ -2612,21 +2629,28 @@ static class DragSelectWatch
                     continue;
                 if (!TryPlaceShape(method, out var objectSlot))
                     continue;
-                found = method;
-                slot = objectSlot;
-                isStatic = !IL2CPP.il2cpp_method_is_instance(method);
-                count++;
+                if (IL2CPP.il2cpp_method_is_instance(method))
+                {
+                    if (_placeMethod != IntPtr.Zero && !_placeStatic)
+                    {
+                        _placeMethod = IntPtr.Zero;
+                        _placeObjectSlot = -1;
+                        return;
+                    }
+
+                    _placeMethod = method;
+                    _placeObjectSlot = objectSlot;
+                    _placeStatic = false;
+                }
+                else if (_placeMethod == IntPtr.Zero)
+                {
+                    _placeMethod = method;
+                    _placeObjectSlot = objectSlot;
+                    _placeStatic = true;
+                }
             }
 
-            if (count == 1)
-            {
-                _placeMethod = found;
-                _placeObjectSlot = slot;
-                _placeStatic = isStatic;
-                return;
-            }
-
-            if (count > 1)
+            if (_placeMethod != IntPtr.Zero && !_placeStatic)
                 return;
         }
     }
@@ -2697,31 +2721,10 @@ static class DragSelectWatch
         return IntPtr.Zero;
     }
 
-    static int FieldKind(IntPtr klass, string fieldName)
-    {
-        var iter = IntPtr.Zero;
-        while (true)
-        {
-            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
-            if (field == IntPtr.Zero)
-                break;
-            if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) != 0)
-                continue;
-            if (!(IL2CPP.il2cpp_field_get_name_(field) ?? "").Equals(fieldName, StringComparison.Ordinal))
-                continue;
-            var type = IL2CPP.il2cpp_field_get_type(field);
-            return type == IntPtr.Zero ? -1 : IL2CPP.il2cpp_type_get_type(type);
-        }
-
-        return -1;
-    }
-
     static void NoteDragEntered(IntPtr drag)
     {
-        var wrote = WriteZero(drag, _foundationsOffset, _foundationsKind);
-        var text = wrote
-            ? "false"
-            : (_foundationsOffset >= MinInstanceOffset ? "kind=" + _foundationsKind : "missing");
+        var wrote = WriteFieldZero(drag, _foundationsField);
+        var text = wrote ? "false" : "missing";
         Plugin.LogSrc.LogInfo("[MS][select] _openFoundationsMenuOnExit=" + text);
         if (_resetMethod == IntPtr.Zero)
         {
@@ -2750,29 +2753,57 @@ static class DragSelectWatch
 
     static void PrepareExit(IntPtr drag)
     {
-        var modeText = WriteZero(drag, _dragModeOffset, _dragModeKind) ? "0" : "missing";
-        var foundText = WriteZero(drag, _foundationsOffset, _foundationsKind) ? "0" : "missing";
+        var modeText = WriteFieldZero(drag, _dragModeField) ? "0" : "missing";
+        var foundText = WriteFieldZero(drag, _foundationsField) ? "0" : "missing";
         Plugin.LogSrc.LogInfo(
             "[MS][select] exit prepare CancelBuild dragMode=" + modeText + " foundations=" + foundText);
     }
 
-    static bool WriteZero(IntPtr obj, int offset, int kind)
+    static IntPtr FindNamedField(IntPtr klass, string fieldName)
     {
-        if (obj == IntPtr.Zero || offset < MinInstanceOffset)
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var field = IL2CPP.il2cpp_class_get_field_from_name(current, fieldName);
+            if (field == IntPtr.Zero)
+                continue;
+            if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) != 0)
+                continue;
+            return field;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static int FieldOffset(IntPtr field)
+    {
+        if (field == IntPtr.Zero)
+            return 0;
+        return unchecked((int)IL2CPP.il2cpp_field_get_offset(field));
+    }
+
+    static int KindOf(IntPtr field)
+    {
+        if (field == IntPtr.Zero)
+            return -1;
+        var type = IL2CPP.il2cpp_field_get_type(field);
+        return type == IntPtr.Zero ? -1 : IL2CPP.il2cpp_type_get_type(type);
+    }
+
+    static unsafe bool WriteFieldZero(IntPtr obj, IntPtr field)
+    {
+        if (obj == IntPtr.Zero || field == IntPtr.Zero)
             return false;
-        if (kind == BoolKind)
+        if (KindOf(field) == BoolKind)
         {
-            Marshal.WriteByte(obj, offset, 0);
+            byte zero = 0;
+            IL2CPP.il2cpp_field_set_value(obj, field, &zero);
             return true;
         }
 
-        if (kind == IntKind || kind == EnumKind)
-        {
-            Marshal.WriteInt32(obj, offset, 0);
-            return true;
-        }
-
-        return false;
+        var value = 0;
+        IL2CPP.il2cpp_field_set_value(obj, field, &value);
+        return true;
     }
 
     static void InvokeCancelBuild()
@@ -2799,48 +2830,29 @@ static class DragSelectWatch
             Plugin.LogSrc.LogError("[MS][select] CancelBuild exception " + ClassName(exc));
     }
 
-    static void RestorePromptsIfLeft(IntPtr cursor)
-    {
-        var mode = ReadMode(cursor);
-        if (IsDragMode(mode, ClassName(mode)))
-            return;
-        RestorePrompt();
-    }
-
-    static void PlaceLeader(IntPtr cursor, IntPtr leader, IntPtr mgr)
+    static bool PlaceLeader(IntPtr cursor, IntPtr leader)
     {
         var leaderText = leader.ToInt64().ToString("X");
-        if (_placeMethod == IntPtr.Zero || _placeObjectSlot < 0)
+        var build = ReadBuildInstance();
+        var thisText = build == IntPtr.Zero ? "null" : build.ToInt64().ToString("X");
+        Plugin.LogSrc.LogInfo("[MS][select] PlaceItem this=" + thisText + " argc=3");
+        if (_placeMethod == IntPtr.Zero || _placeObjectSlot < 0 || build == IntPtr.Zero)
         {
             Plugin.LogSrc.LogError("[MS][select] PlaceItem leader=" + leaderText + " mode=missing-method");
-            if (mgr != IntPtr.Zero)
-                InvokeClear(mgr);
-            return;
+            return false;
         }
 
-        if (!_placeStatic && ReadBuildInstance() == IntPtr.Zero)
-        {
-            Plugin.LogSrc.LogError("[MS][select] PlaceItem leader=" + leaderText + " mode=instance-null");
-            if (mgr != IntPtr.Zero)
-                InvokeClear(mgr);
-            return;
-        }
-
-        var exc = InvokePlace(leader);
+        var exc = InvokePlace(leader, build);
         var mode = ReadMode(cursor);
         var name = ClassName(mode);
         Plugin.LogSrc.LogInfo(
             "[MS][select] PlaceItem leader=" + leaderText +
             " mode=" + name +
             (exc == IntPtr.Zero ? "" : " exc=" + ClassName(exc)));
-        if (IsPlaceMode(mode, name))
-            return;
-        Plugin.LogSrc.LogError("[MS][select] ERROR mode=" + name + " after PlaceItem");
-        if (mgr != IntPtr.Zero)
-            InvokeClear(mgr);
+        return exc == IntPtr.Zero && IsPlaceMode(mode, name);
     }
 
-    static unsafe IntPtr InvokePlace(IntPtr leader)
+    static unsafe IntPtr InvokePlace(IntPtr leader, IntPtr build)
     {
         var exc = IntPtr.Zero;
         var item = leader;
@@ -2851,8 +2863,7 @@ static class DragSelectWatch
         argv[1] = &zeroB;
         argv[2] = &zeroB;
         argv[_placeObjectSlot] = &item;
-        var obj = _placeStatic ? IntPtr.Zero : ReadBuildInstance();
-        IL2CPP.il2cpp_runtime_invoke(_placeMethod, obj, argv, ref exc);
+        IL2CPP.il2cpp_runtime_invoke(_placeMethod, build, argv, ref exc);
         return exc;
     }
 

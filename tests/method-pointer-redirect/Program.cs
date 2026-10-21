@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.31"), "version 0.4.31");
+        Expect(plugin.Contains("0.4.32"), "version 0.4.32");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -186,6 +186,8 @@ internal static class Program
         Expect(!watch.Contains("OnCursorHoverStart"), "no hover stub");
         Expect(!watch.Contains("WorldCursorState"), "no world cursor hover");
         Expect(watch.Contains("[MS][select] PlaceItem leader="), "logs PlaceItem");
+        Expect(watch.Contains("[MS][select] PlaceItem this="), "logs the PlaceItem instance");
+        Expect(watch.Contains("il2cpp_field_set_value"), "writes drag mode through il2cpp");
         Expect(watch.Contains("[MS][select] exit prepare CancelBuild"), "logs CancelBuild");
         Expect(watch.Contains("[MS][select] gate override on"), "logs the group gate override");
         Expect(watch.Contains("[MS][select] gate override off"), "logs the group gate restore");
