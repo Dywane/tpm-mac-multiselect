@@ -1,3 +1,5 @@
+Do not deploy this build. Live `1b69358` logged `suppress hit n=2 vtableHits=0` and no `suppress entered`. The open candidate `<CheckPromptProcessSelectedItems>b__76_0/1` was not swapped. `SelectEntity` rejected all 36. MS 0.4.29 stubs every named prompt method, including methods with arguments, and calls `SelectEntity` for each copied entity. See `docs/evidence/ithm-select-0.4.29.md`.
+
 # ITHM Task5 prompt skip and entity copy (MS 0.4.28)
 
 **MS:** 0.4.28

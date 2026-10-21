@@ -14,8 +14,8 @@ static class DragSelectWatch
     const int CocoaShift = 512;
     const int CocoaRightShift = 8192;
     const int MaxKeep = 512;
-    const int MaxPrompt = 8;
-    const int MaxSlots = 24;
+    const int MaxPrompt = 16;
+    const int MaxSlots = 64;
     const int BoolKind = 0x02;
     const int IntKind = 8;
     const int SzArrayKind = 29;
@@ -32,6 +32,9 @@ static class DragSelectWatch
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     delegate void ZeroArgInstance(IntPtr self, IntPtr methodInfo);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    delegate int SuppressReturn(IntPtr a, IntPtr b, IntPtr c, IntPtr d);
 
     static ZeroArgInstance? _original;
     static ZeroArgInstance? _thunk;
@@ -64,17 +67,22 @@ static class DragSelectWatch
     static int _promptCount;
     static readonly IntPtr[] _promptMethods = new IntPtr[MaxPrompt];
     static readonly IntPtr[] _promptOriginals = new IntPtr[MaxPrompt];
+    static readonly IntPtr[] _promptHooks = new IntPtr[MaxPrompt];
     static readonly string[] _promptLabels = new string[MaxPrompt];
     static readonly bool[] _promptVirtual = new bool[MaxPrompt];
     static readonly bool[] _promptSeen = new bool[MaxPrompt];
-    static ZeroArgInstance? _promptThunk;
-    static IntPtr _promptHookFn;
+    static readonly SuppressReturn[] _promptThunks =
+    {
+        Skip0, Skip1, Skip2, Skip3, Skip4, Skip5, Skip6, Skip7,
+        Skip8, Skip9, Skip10, Skip11, Skip12, Skip13, Skip14, Skip15
+    };
     static bool _promptInstalled;
-    static bool _unknownEntered;
     static int _slotCount;
     static readonly IntPtr[] _slotVtable = new IntPtr[MaxSlots];
     static readonly int[] _slotIndex = new int[MaxSlots];
     static readonly IntPtr[] _slotOriginal = new IntPtr[MaxSlots];
+    static readonly IntPtr[] _slotHook = new IntPtr[MaxSlots];
+    static bool _slotFullLogged;
     static int _framesOutside;
     static bool _holdLogged;
     static readonly IntPtr[] _snap = new IntPtr[MaxKeep];
@@ -1549,17 +1557,15 @@ static class DragSelectWatch
                 var name = IL2CPP.il2cpp_method_get_name_(method) ?? "";
                 if (!IsPromptName(name))
                     continue;
-                if (!IL2CPP.il2cpp_method_is_instance(method))
-                    continue;
                 var argc = IL2CPP.il2cpp_method_get_param_count(method);
-                if (argc != 0 || _promptCount >= MaxPrompt || AlreadyPrompt(method))
+                if (_promptCount >= MaxPrompt || AlreadyPrompt(method))
                 {
                     open += " " + className + "." + name + "/" + argc;
                     continue;
                 }
 
                 _promptMethods[_promptCount] = method;
-                _promptLabels[_promptCount] = className + "." + name;
+                _promptLabels[_promptCount] = className + "." + name + "/" + argc;
                 _promptSeen[_promptCount] = false;
                 _promptCount++;
             }
@@ -1658,8 +1664,6 @@ static class DragSelectWatch
             return;
         }
 
-        _promptThunk = SkipPrompt;
-        _promptHookFn = Marshal.GetFunctionPointerForDelegate(_promptThunk);
         _slotCount = 0;
         Thread.MemoryBarrier();
         var armed = 0;
@@ -1667,6 +1671,19 @@ static class DragSelectWatch
         for (var i = 0; i < _promptCount; i++)
         {
             var method = _promptMethods[i];
+            var hook = _promptHooks[i];
+            if (hook == IntPtr.Zero)
+            {
+                hook = Marshal.GetFunctionPointerForDelegate(_promptThunks[i]);
+                _promptHooks[i] = hook;
+            }
+
+            if (hook == IntPtr.Zero)
+            {
+                Plugin.LogSrc.LogError("[MS][select] suppress miss " + _promptLabels[i] + " thunk empty");
+                continue;
+            }
+
             if (!MethodPointerRedirect.TryRead(method, out var original) || original == IntPtr.Zero)
             {
                 Plugin.LogSrc.LogError("[MS][select] suppress miss " + _promptLabels[i] + " MethodPointer empty");
@@ -1679,12 +1696,12 @@ static class DragSelectWatch
                 var virtualHit = false;
                 if (info.VirtualMethodPointer == original)
                 {
-                    info.VirtualMethodPointer = _promptHookFn;
+                    info.VirtualMethodPointer = hook;
                     virtualHit = true;
                 }
 
-                info.MethodPointer = _promptHookFn;
-                if (info.MethodPointer != _promptHookFn)
+                info.MethodPointer = hook;
+                if (info.MethodPointer != hook)
                 {
                     info.MethodPointer = original;
                     if (virtualHit)
@@ -1697,18 +1714,17 @@ static class DragSelectWatch
                 _promptVirtual[i] = virtualHit;
                 _promptSeen[i] = false;
                 armed++;
-                vtableHits += RedirectSlots(info.Class, original, _promptHookFn);
+                vtableHits += RedirectSlots(info.Class, original, hook);
                 var slot = (int)info.Slot;
                 if (slot >= 0 && slot < 4096 && info.Class != null)
                 {
                     var native = UnityVersionHandler.Wrap(info.Class);
                     if (slot < native.VtableCount)
-                        vtableHits += WriteSlot(native.VTable, slot, original, _promptHookFn);
+                        vtableHits += WriteSlot(native.VTable, slot, original, hook);
                 }
             }
         }
 
-        _unknownEntered = false;
         _promptInstalled = armed > 0;
         if (!_promptInstalled)
             return;
@@ -1736,8 +1752,19 @@ static class DragSelectWatch
 
     static int WriteSlot(IntPtr table, int slot, IntPtr original, IntPtr hook)
     {
-        if (table == IntPtr.Zero || slot < 0 || _slotCount >= MaxSlots)
+        if (table == IntPtr.Zero || slot < 0)
             return 0;
+        if (_slotCount >= MaxSlots)
+        {
+            if (!_slotFullLogged)
+            {
+                _slotFullLogged = true;
+                Plugin.LogSrc.LogError("[MS][select] suppress slot full");
+            }
+
+            return 0;
+        }
+
         var entry = table + slot * MethodPointerRedirect.VirtualInvokeStride;
         if (Marshal.ReadIntPtr(entry) != original)
             return 0;
@@ -1747,40 +1774,43 @@ static class DragSelectWatch
         _slotVtable[_slotCount] = table;
         _slotIndex[_slotCount] = slot;
         _slotOriginal[_slotCount] = original;
+        _slotHook[_slotCount] = hook;
         _slotCount++;
         return 1;
     }
 
-    static void SkipPrompt(IntPtr self, IntPtr methodInfo)
+    static int Enter(int index)
     {
-        var label = "";
-        for (var i = 0; i < _promptCount; i++)
-        {
-            if (_promptMethods[i] != methodInfo)
-                continue;
-            if (_promptSeen[i])
-                return;
-            _promptSeen[i] = true;
-            label = _promptLabels[i];
-            break;
-        }
-
-        if (label.Length == 0)
-        {
-            if (_unknownEntered)
-                return;
-            _unknownEntered = true;
-            label = "unknown";
-        }
-
+        if ((uint)index >= (uint)_promptCount || _promptSeen[index])
+            return 0;
+        _promptSeen[index] = true;
         try
         {
-            Plugin.LogSrc.LogInfo("[MS][select] suppress entered " + label);
+            Plugin.LogSrc.LogInfo("[MS][select] suppress entered " + _promptLabels[index]);
         }
         catch (Exception)
         {
         }
+
+        return 0;
     }
+
+    static int Skip0(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(0);
+    static int Skip1(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(1);
+    static int Skip2(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(2);
+    static int Skip3(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(3);
+    static int Skip4(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(4);
+    static int Skip5(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(5);
+    static int Skip6(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(6);
+    static int Skip7(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(7);
+    static int Skip8(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(8);
+    static int Skip9(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(9);
+    static int Skip10(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(10);
+    static int Skip11(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(11);
+    static int Skip12(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(12);
+    static int Skip13(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(13);
+    static int Skip14(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(14);
+    static int Skip15(IntPtr a, IntPtr b, IntPtr c, IntPtr d) => Enter(15);
 
     static void HoldOrRestore()
     {
@@ -1818,7 +1848,7 @@ static class DragSelectWatch
             for (var s = 0; s < _slotCount; s++)
             {
                 var entry = _slotVtable[s] + _slotIndex[s] * MethodPointerRedirect.VirtualInvokeStride;
-                if (Marshal.ReadIntPtr(entry) == _promptHookFn)
+                if (Marshal.ReadIntPtr(entry) == _slotHook[s])
                     Marshal.WriteIntPtr(entry, _slotOriginal[s]);
             }
         }
@@ -1883,9 +1913,12 @@ static class DragSelectWatch
         var kept = 0;
         var rejected = 0;
         var failed = 0;
+        var samples = copied < 3 ? copied : 3;
+        for (var s = 0; s < samples; s++)
+            LogAllow(s, mgr, use[s]);
         for (var i = 0; i < copied; i++)
         {
-            if (_allowMethod != IntPtr.Zero && !InvokeBoolPtr(_allowMethod, mgr, use[i]))
+            if (use[i] == IntPtr.Zero)
             {
                 rejected++;
                 continue;
@@ -2339,16 +2372,31 @@ static class DragSelectWatch
         return false;
     }
 
-    static unsafe bool InvokeBoolPtr(IntPtr method, IntPtr obj, IntPtr arg)
+    static unsafe void LogAllow(int index, IntPtr mgr, IntPtr entity)
     {
-        var exc = IntPtr.Zero;
-        var value = arg;
-        var argv = stackalloc void*[1];
-        argv[0] = &value;
-        var ret = IL2CPP.il2cpp_runtime_invoke(method, obj, argv, ref exc);
-        if (exc != IntPtr.Zero || ret == IntPtr.Zero)
-            return false;
-        return Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0;
+        var value = "missing";
+        var shown = "none";
+        if (_allowMethod != IntPtr.Zero)
+        {
+            var exc = IntPtr.Zero;
+            var arg = entity;
+            var argv = stackalloc void*[1];
+            argv[0] = &arg;
+            var ret = IL2CPP.il2cpp_runtime_invoke(_allowMethod, mgr, argv, ref exc);
+            if (exc != IntPtr.Zero)
+                shown = ClassName(exc);
+            else if (ret == IntPtr.Zero)
+                value = "nullbox";
+            else
+                value = Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0 ? "1" : "0";
+        }
+
+        Plugin.LogSrc.LogInfo(
+            "[MS][select] allow i=" + index +
+            " mgr=" + mgr.ToInt64().ToString("X") +
+            " entity=" + entity.ToInt64().ToString("X") +
+            " value=" + value +
+            " exc=" + shown);
     }
 
     static IntPtr FindInstanceArgc(IntPtr klass, string methodName, uint argc)

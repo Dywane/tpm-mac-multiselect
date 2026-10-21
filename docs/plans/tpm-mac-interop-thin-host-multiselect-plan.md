@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.28** 把拆除确认的跳过留到离开拖拽模式之后，并用 `get_Item` 或 `CopyTo` 抄选中实体。细节在 `docs/evidence/ithm-select-0.4.28.md`。
+**状态（2026-10-21）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.29** 给带参的拆除确认方法各自换上返回 0 的 thunk，并在 allow 检查为假时仍调用 `SelectEntity`。细节在 `docs/evidence/ithm-select-0.4.29.md`。
 
 **执行方：** demo建造  
 

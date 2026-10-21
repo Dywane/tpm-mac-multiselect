@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.28"), "version 0.4.28");
+        Expect(plugin.Contains("0.4.29"), "version 0.4.29");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -188,6 +188,10 @@ internal static class Program
         Expect(!watch.Contains("PlaceItem"), "does not place the group");
         Expect(watch.Contains("CheckPromptProcessSelectedItems"), "names the demolish prompt");
         Expect(watch.Contains("suppress hit"), "logs the prompt skip");
+        Expect(watch.Contains("[MS][select] suppress entered "), "logs suppress entered");
+        Expect(watch.Contains("[MS][select] allow i="), "logs why the allow check fails");
+        Expect(watch.Contains("ProcessSelected"), "stubs ProcessSelected overloads");
+        Expect(!watch.Contains("argc != 0"), "prompt stubs include methods with arguments");
         Expect(watch.Contains("[MS][select] SelectEntity enter count="), "logs SelectEntity");
         Expect(watch.Contains("suppress hold"), "keeps the prompt skip after finish");
         Expect(watch.Contains("before ClearAll"), "snapshots before clearing the group");
