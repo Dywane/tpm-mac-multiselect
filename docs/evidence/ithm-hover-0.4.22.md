@@ -1,5 +1,7 @@
 # ITHM Task5 after the 0.4.21 black screen (MS 0.4.22)
 
+Do not use this build as the Task5 pass. It only logs type names. MS 0.4.23 calls `StartGameDragSelect` after placement is ready. See `docs/evidence/ithm-select-0.4.23.md`.
+
 **MS:** 0.4.22
 **Host:** 0.4.0. Do not replace the Host DLL.
 **Live menu:** still for the build machine. This VM cannot run the game.

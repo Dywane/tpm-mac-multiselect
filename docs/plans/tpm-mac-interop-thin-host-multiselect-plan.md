@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** MS **0.4.22** 删掉 `ESCursorSelectResult` 与 `CursorManager.OnUpdate` 的 swap。0.4.21 冷启黑屏发生在这两处执行之前。SeanB 对照说明多选是框选组，不是悬停。0.4.22 在 `PLACEMENT_READY` 后只解析那些类型名。细节在 `docs/evidence/ithm-hover-0.4.22.md`。
+**状态（2026-10-21）：** Task5 改为 SeanB 框选。MS **0.4.23** 在 `PLACEMENT_READY` 之后对 Left Shift 调用 `StartGameDragSelect`，拖拽结束打 `[MS][select] HIT count=N`。不调用 `PlaceItem`。悬停 HIT 不再作为通过条件。细节在 `docs/evidence/ithm-select-0.4.23.md`。
 
 **执行方：** demo建造  
 

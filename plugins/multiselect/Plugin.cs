@@ -14,7 +14,7 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    public const string PluginVersion = "0.4.22";
+    public const string PluginVersion = "0.4.23";
 
     internal static ManualLogSource LogSrc = null!;
 
@@ -25,7 +25,7 @@ public class Plugin : BasePlugin
         LogSrc = Log;
         Log.LogInfo(
             $"{PluginName} {PluginVersion} loaded " +
-            "(ithm: OnBecomeActive methodPointer only; ESCursorSelectResult arm removed; OnCursorHoverStart retired; SeanB name probe after PLACEMENT_READY; prologue rewrite OFF; poll retired)");
+            "(ithm: OnBecomeActive methodPointer only at load; hover hooks removed; Shift drag watch after PLACEMENT_READY; prologue rewrite OFF; poll retired)");
 
         Log.LogInfo(
             "[MS] PlaceModeFieldPoll not started (user: no poll); " +
