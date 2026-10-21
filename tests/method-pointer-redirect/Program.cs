@@ -14,6 +14,8 @@ internal static class Program
         Vtable_redirects_only_a_matching_slot();
         Vtable_refuses_a_mismatch_or_a_bad_slot();
         Hook_source_does_not_rewrite_game_assembly();
+        Hover_sample_does_not_inject_a_monobehaviour();
+        Exception_text_keeps_the_inner_exception();
         if (_fails != 0)
         {
             Console.Error.WriteLine($"FAIL {_fails}");
@@ -140,6 +142,43 @@ internal static class Program
         Expect(!hook.Contains("PlaceModeFieldPoll"), "no poll");
         Expect(hook.Contains("TryArmEnterMethodPointer"), "arm entry exists");
         Expect(!File.Exists(gate), "detach gate removed with the Harmony enter patch");
+    }
+
+    static void Hover_sample_does_not_inject_a_monobehaviour()
+    {
+        var root = FindRepoRoot();
+        var plugin = File.ReadAllText(Path.Combine(root, "plugins/multiselect/Plugin.cs"));
+        var place = File.ReadAllText(Path.Combine(root, "plugins/multiselect/Hooks/PlacementReadyHook.cs"));
+        var hoverPath = Path.Combine(root, "plugins/multiselect/Hooks/HoverWatch.cs");
+        var samplePath = Path.Combine(root, "plugins/multiselect/Hooks/HoverSampleHook.cs");
+        Expect(!File.Exists(hoverPath), "HoverWatch.cs deleted");
+        Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
+        Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
+        Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
+        Expect(plugin.Contains("0.4.13"), "version 0.4.13");
+        Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
+        var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
+        Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
+        Expect(sample.Contains("InnerException"), "arm failure keeps InnerException");
+        Expect(!sample.Contains("ClassInjector"), "sample has no ClassInjector");
+        Expect(!sample.Contains("harmony.Patch"), "sample has no harmony.Patch");
+        Expect(!sample.Contains("OnBecomeActive"), "sample does not retarget OnBecomeActive");
+        Expect(place.Contains("TryArmEnterMethodPointer"), "enter arm remains");
+        Expect(place.Contains("HoverSampleHook.Arm"), "sample arms after placement ready");
+    }
+
+    static void Exception_text_keeps_the_inner_exception()
+    {
+        var ex = new InvalidOperationException(
+            "outer",
+            new TypeInitializationException(
+                "Il2CppInterop.Runtime.Injection.InjectorHelpers",
+                new DllNotFoundException("GameAssembly")));
+        var text = ExceptionText.Format(ex);
+        Expect(text.Contains("InvalidOperationException: outer"), "outer type and message");
+        Expect(text.Contains("TypeInitializationException"), "type initializer type");
+        Expect(text.Contains("InjectorHelpers"), "type initializer name");
+        Expect(text.Contains("DllNotFoundException: GameAssembly"), "inner exception");
     }
 
     static string FindRepoRoot()
