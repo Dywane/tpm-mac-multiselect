@@ -155,10 +155,17 @@ internal static class Program
         Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
-        Expect(plugin.Contains("0.4.13"), "version 0.4.13");
+        Expect(plugin.Contains("0.4.14"), "version 0.4.14");
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
+        Expect(sample.Contains("TryGetHoveredSelectable(self"), "sample passes the CursorManager instance");
+        var bridgePath = Path.Combine(root, "plugins/multiselect/BuildActions/Il2CppItemSelectionBridge.cs");
+        var bridge = File.Exists(bridgePath) ? File.ReadAllText(bridgePath) : "";
+        Expect(!bridge.Contains("_elementWithFocus"), "hover read drops UI focus");
+        Expect(!bridge.Contains("_previouslyFocusedElement"), "hover read drops previous UI focus");
+        Expect(bridge.Contains("\"_mode\""), "hover reads CursorManager._mode");
+        Expect(bridge.Contains("\"<Item>k__BackingField\""), "hover reads the place item");
         var formatted = File.ReadAllText(Path.Combine(root, "plugins/multiselect/Hooks/ExceptionText.cs"));
         Expect(formatted.Contains("InnerException"), "formatter walks InnerException");
         Expect(sample.Contains("ExceptionText.Format"), "arm failure uses the formatter");
