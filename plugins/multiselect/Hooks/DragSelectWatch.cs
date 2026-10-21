@@ -13,6 +13,8 @@ static class DragSelectWatch
     const int MinInstanceOffset = 16;
     const int CocoaShift = 512;
     const int CocoaRightShift = 8192;
+    const int MaxKeep = 512;
+    const int BoolKind = 0x02;
     const int ProbeCandidates0 = 303;
     const int ProbeCandidates1 = 304;
     const int ProbeCandidates2 = 305;
@@ -52,6 +54,28 @@ static class DragSelectWatch
     static IntPtr _isPressedMethod;
     static IntPtr _selectClass;
     static IntPtr _dragClass;
+    static int _managerOffset;
+    static string _managerHow = "missing";
+    static string _promptHow = "missing";
+    static IntPtr _promptMethod;
+    static IntPtr _promptOriginalFn;
+    static IntPtr _promptHookFn;
+    static IntPtr _promptVtable;
+    static int _promptSlot;
+    static int _promptVtableCount;
+    static bool _promptVirtualHit;
+    static bool _promptVtableHit;
+    static bool _promptInstalled;
+    static bool _promptEntered;
+    static ZeroArgInstance? _promptThunk;
+    static IntPtr _clearMethod;
+    static IntPtr _allowMethod;
+    static IntPtr _selectMethod;
+    static bool _selectBoolFirst;
+    static bool _groupBound;
+    static bool _selectThrew;
+    static string _groupWhy = "";
+    static string _copyWhy = "";
     static readonly int[] _codes = new int[3];
     static readonly string[] _codeNames = new string[3];
     static int _codeCount;
@@ -134,6 +158,9 @@ static class DragSelectWatch
                 return;
             }
 
+            _promptHow = BindPrompt(drag);
+            _managerHow = BindManager(cursor);
+
             if (!MethodPointerRedirect.TryRead(method, out var atZero) || atZero != original)
             {
                 GiveUp("MethodInfo offset 0 != MethodPointer");
@@ -201,6 +228,8 @@ static class DragSelectWatch
                     " argc=" + IL2CPP.il2cpp_method_get_param_count(_startMethod) +
                     " selectClass=" + (_selectClass == IntPtr.Zero ? "missing" : "ok") +
                     " mouse=not-required" +
+                    " prompt=" + _promptHow +
+                    " manager=" + _managerHow +
                     " _mode=" + _modeOffset +
                     " _isDragging=" + _draggingOffset +
                     " _itemsSelected=" + _itemsOffset +
@@ -277,7 +306,7 @@ static class DragSelectWatch
             var modeClass = mode == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(mode);
             var select = IsSelectMode(modeClass, modeName);
             if (_phase != Phase.Idle || IsDragMode(mode, modeName))
-                WatchDrag(mode, modeName);
+                WatchDrag(self, mode, modeName);
 
             try
             {
@@ -322,16 +351,17 @@ static class DragSelectWatch
         }
     }
 
-    static void WatchDrag(IntPtr mode, string modeName)
+    static void WatchDrag(IntPtr cursor, IntPtr mode, string modeName)
     {
         if (!IsDragMode(mode, modeName))
         {
             if (_phase == Phase.Dragging)
-                Finish();
+                Finish(cursor);
             else
             {
                 _phase = Phase.Idle;
                 _dragInstance = IntPtr.Zero;
+                RestorePrompt();
             }
 
             return;
@@ -346,27 +376,40 @@ static class DragSelectWatch
         }
 
         if (_phase == Phase.Dragging)
-            Finish();
+            Finish(cursor);
     }
 
-    static void Finish()
+    static void Finish(IntPtr cursor)
     {
-        var count = ReadCount(_dragInstance);
-        _dragInstance = IntPtr.Zero;
-        _phase = Phase.Idle;
-        if (count < 0)
+        var drag = _dragInstance;
+        var count = ReadCount(drag);
+        try
         {
-            Plugin.LogSrc.LogInfo("[MS][select] MISS count unreadable");
-            return;
-        }
+            if (count < 0)
+            {
+                Plugin.LogSrc.LogInfo("[MS][select] MISS count unreadable");
+                return;
+            }
 
-        if (count == 0)
+            if (count == 0)
+            {
+                Plugin.LogSrc.LogInfo("[MS][select] MISS count=0");
+                return;
+            }
+
+            Plugin.LogSrc.LogInfo("[MS][select] HIT count=" + count);
+            Keep(cursor, drag, count);
+        }
+        catch (Exception ex)
         {
-            Plugin.LogSrc.LogInfo("[MS][select] MISS count=0");
-            return;
+            Plugin.LogSrc.LogError("[MS][select] SelectEntity miss threw: " + ExceptionText.Format(ex));
         }
-
-        Plugin.LogSrc.LogInfo("[MS][select] HIT count=" + count);
+        finally
+        {
+            _dragInstance = IntPtr.Zero;
+            _phase = Phase.Idle;
+            RestorePrompt();
+        }
     }
 
     static void CallStart(IntPtr self)
@@ -394,9 +437,11 @@ static class DragSelectWatch
             Plugin.LogSrc.LogInfo("[MS][select] enter StartGameDragSelect");
         }
 
+        InstallPromptSkip();
         var exc = InvokeInt(_startMethod, build, 0);
         if (exc != IntPtr.Zero)
         {
+            RestorePrompt();
             Plugin.LogSrc.LogError("[MS][select] StartGameDragSelect exception " + ClassName(exc));
             return;
         }
@@ -404,7 +449,15 @@ static class DragSelectWatch
         var afterPtr = ReadMode(self);
         var after = ClassName(afterPtr);
         Plugin.LogSrc.LogInfo("[MS][select] after StartGameDragSelect mode=" + after);
-        _phase = IsDragMode(afterPtr, after) ? Phase.Armed : Phase.Idle;
+        if (!IsDragMode(afterPtr, after))
+        {
+            RestorePrompt();
+            _phase = Phase.Idle;
+        }
+        else
+        {
+            _phase = Phase.Armed;
+        }
         _dragInstance = IntPtr.Zero;
     }
 
@@ -1441,6 +1494,500 @@ static class DragSelectWatch
         }
 
         return true;
+    }
+
+    static string BindPrompt(IntPtr drag)
+    {
+        _promptMethod = IntPtr.Zero;
+        var depth = 0;
+        for (var current = drag; current != IntPtr.Zero && depth < 4; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            if (TryFindDeclaredZeroArg(current, "CheckPromptProcessSelectedItems", out var method, out _))
+            {
+                _promptMethod = method;
+                return "CheckPromptProcessSelectedItems";
+            }
+        }
+
+        return "missing" + PromptNames(drag);
+    }
+
+    static string BindManager(IntPtr cursor)
+    {
+        _managerOffset = 0;
+        if (TryFindInstanceField(cursor, "_levelEditorGroupSelectionManager", out _managerOffset, out _))
+            return "field:_levelEditorGroupSelectionManager";
+        if (TryFindManagerField(cursor, out _managerOffset, out var name))
+            return "field:" + name;
+        return "missing";
+    }
+
+    static bool TryFindManagerField(IntPtr klass, out int offset, out string name)
+    {
+        offset = 0;
+        name = "";
+        var found = 0;
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
+            if (field == IntPtr.Zero)
+                break;
+            if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) != 0)
+                continue;
+            var typeName = FieldTypeName(field);
+            if (typeName.IndexOf("LevelEditorGroupSelectionManager", StringComparison.Ordinal) < 0)
+                continue;
+            var next = unchecked((int)IL2CPP.il2cpp_field_get_offset(field));
+            if (next < MinInstanceOffset)
+                continue;
+            offset = next;
+            name = IL2CPP.il2cpp_field_get_name_(field) ?? "";
+            found++;
+        }
+
+        return found == 1 && name.Length > 0;
+    }
+
+    static string PromptNames(IntPtr klass)
+    {
+        var text = "";
+        var listed = 0;
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 3 && listed < 12; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var iter = IntPtr.Zero;
+            while (listed < 12)
+            {
+                var method = IL2CPP.il2cpp_class_get_methods(current, ref iter);
+                if (method == IntPtr.Zero)
+                    break;
+                var name = IL2CPP.il2cpp_method_get_name_(method) ?? "";
+                if (name.IndexOf("Prompt", StringComparison.Ordinal) < 0 &&
+                    name.IndexOf("Selected", StringComparison.Ordinal) < 0)
+                    continue;
+                text += " " + name + "/" + IL2CPP.il2cpp_method_get_param_count(method);
+                listed++;
+            }
+        }
+
+        return text.Length == 0 ? " no Prompt methods" : text;
+    }
+
+    static void InstallPromptSkip()
+    {
+        if (_promptInstalled || _promptMethod == IntPtr.Zero)
+            return;
+        if (!MethodPointerRedirect.TryRead(_promptMethod, out var original) || original == IntPtr.Zero)
+        {
+            Plugin.LogSrc.LogError("[MS][select] suppress miss CheckPromptProcessSelectedItems MethodPointer empty");
+            return;
+        }
+
+        _promptThunk = SkipPrompt;
+        var hookPtr = Marshal.GetFunctionPointerForDelegate(_promptThunk);
+        Thread.MemoryBarrier();
+        unsafe
+        {
+            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_promptMethod);
+            _promptSlot = (int)info.Slot;
+            _promptVirtualHit = false;
+            if (info.VirtualMethodPointer == original)
+            {
+                info.VirtualMethodPointer = hookPtr;
+                _promptVirtualHit = true;
+            }
+
+            info.MethodPointer = hookPtr;
+            if (info.MethodPointer != hookPtr ||
+                !MethodPointerRedirect.TryRead(_promptMethod, out var after) ||
+                after != hookPtr)
+            {
+                info.MethodPointer = original;
+                if (_promptVirtualHit)
+                    info.VirtualMethodPointer = original;
+                _promptThunk = null;
+                Plugin.LogSrc.LogError("[MS][select] suppress miss CheckPromptProcessSelectedItems write did not stick");
+                return;
+            }
+
+            _promptOriginalFn = original;
+            _promptHookFn = hookPtr;
+            _promptVtableHit = false;
+            try
+            {
+                var klassPtr = info.Class;
+                if (klassPtr != null)
+                {
+                    var nativeKlass = UnityVersionHandler.Wrap(klassPtr);
+                    _promptVtable = nativeKlass.VTable;
+                    _promptVtableCount = nativeKlass.VtableCount;
+                    _promptVtableHit = MethodPointerRedirect.TryRedirectVtableSlot(
+                        _promptVtable,
+                        _promptSlot,
+                        _promptVtableCount,
+                        original,
+                        hookPtr);
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.LogSrc.LogWarning(
+                    "[MS][select] suppress method pointer set; vtable slot left unchanged: " + ExceptionText.Format(ex));
+            }
+
+            _promptInstalled = true;
+            _promptEntered = false;
+            Plugin.LogSrc.LogInfo(
+                "[MS][select] suppress hit CheckPromptProcessSelectedItems methodPointer" +
+                " vtableSlot=" + _promptVtableHit +
+                " slot=" + _promptSlot);
+        }
+    }
+
+    static void SkipPrompt(IntPtr self, IntPtr methodInfo)
+    {
+        if (_promptEntered)
+            return;
+        _promptEntered = true;
+        try
+        {
+            Plugin.LogSrc.LogInfo("[MS][select] suppress entered CheckPromptProcessSelectedItems");
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    static void RestorePrompt()
+    {
+        if (!_promptInstalled || _promptMethod == IntPtr.Zero)
+            return;
+        unsafe
+        {
+            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_promptMethod);
+            info.MethodPointer = _promptOriginalFn;
+            if (_promptVirtualHit)
+                info.VirtualMethodPointer = _promptOriginalFn;
+            if (_promptVtableHit)
+            {
+                MethodPointerRedirect.TryRedirectVtableSlot(
+                    _promptVtable,
+                    _promptSlot,
+                    _promptVtableCount,
+                    _promptHookFn,
+                    _promptOriginalFn);
+            }
+        }
+
+        _promptInstalled = false;
+        Plugin.LogSrc.LogInfo("[MS][select] suppress restored CheckPromptProcessSelectedItems");
+    }
+
+    static void Keep(IntPtr cursor, IntPtr drag, int count)
+    {
+        var cap = count > MaxKeep ? MaxKeep : count;
+        var dest = new IntPtr[cap];
+        var copied = CopySelected(ReadItems(drag), dest);
+        if (copied < 0)
+        {
+            Plugin.LogSrc.LogError("[MS][select] SelectEntity miss copy " + _copyWhy);
+            return;
+        }
+
+        var mgr = ReadManager(cursor);
+        if (mgr == IntPtr.Zero)
+        {
+            Plugin.LogSrc.LogError("[MS][select] SelectEntity miss manager null " + _managerHow);
+            return;
+        }
+
+        if (!EnsureGroup(mgr))
+        {
+            Plugin.LogSrc.LogError("[MS][select] SelectEntity miss " + _groupWhy);
+            return;
+        }
+
+        InvokeClear(mgr);
+        var kept = 0;
+        var rejected = 0;
+        var failed = 0;
+        for (var i = 0; i < copied; i++)
+        {
+            if (_allowMethod != IntPtr.Zero && !InvokeBoolPtr(_allowMethod, mgr, dest[i]))
+            {
+                rejected++;
+                continue;
+            }
+
+            if (InvokeSelect(mgr, dest[i]))
+                kept++;
+            else
+                failed++;
+        }
+
+        Plugin.LogSrc.LogInfo(
+            "[MS][select] SelectEntity enter count=" + kept +
+            " copied=" + copied +
+            " rejected=" + rejected +
+            " failed=" + failed);
+    }
+
+    static IntPtr ReadItems(IntPtr mode)
+    {
+        if (mode == IntPtr.Zero || _itemsOffset < MinInstanceOffset)
+            return IntPtr.Zero;
+        return Marshal.ReadIntPtr(mode, _itemsOffset);
+    }
+
+    static IntPtr ReadManager(IntPtr cursor)
+    {
+        if (cursor == IntPtr.Zero || _managerOffset < MinInstanceOffset)
+            return IntPtr.Zero;
+        return Marshal.ReadIntPtr(cursor, _managerOffset);
+    }
+
+    static int CopySelected(IntPtr set, IntPtr[] dest)
+    {
+        _copyWhy = "";
+        if (set == IntPtr.Zero)
+        {
+            _copyWhy = "set null";
+            return -1;
+        }
+
+        var klass = IL2CPP.il2cpp_object_get_class(set);
+        var getEnum = FindInstanceZeroArg(klass, "GetEnumerator");
+        if (getEnum == IntPtr.Zero)
+        {
+            _copyWhy = "GetEnumerator missing " + MethodNames(klass);
+            return -1;
+        }
+
+        var enumerator = InvokeObject(getEnum, set);
+        if (enumerator == IntPtr.Zero)
+        {
+            _copyWhy = "GetEnumerator null";
+            return -1;
+        }
+
+        var enumeratorClass = IL2CPP.il2cpp_object_get_class(enumerator);
+        var move = FindInstanceZeroArg(enumeratorClass, "MoveNext");
+        var current = FindInstanceZeroArg(enumeratorClass, "get_Current");
+        if (move == IntPtr.Zero || current == IntPtr.Zero)
+        {
+            _copyWhy = "MoveNext=" + (move != IntPtr.Zero) +
+                       " get_Current=" + (current != IntPtr.Zero) +
+                       " " + MethodNames(enumeratorClass);
+            return -1;
+        }
+
+        var copied = 0;
+        var guard = 0;
+        while (copied < dest.Length && guard <= dest.Length && InvokeBoolZero(move, enumerator))
+        {
+            guard++;
+            var item = InvokeObject(current, enumerator);
+            if (item == IntPtr.Zero)
+                continue;
+            dest[copied++] = item;
+        }
+
+        return copied;
+    }
+
+    static bool EnsureGroup(IntPtr mgr)
+    {
+        if (_groupBound)
+            return _selectMethod != IntPtr.Zero;
+        _groupBound = true;
+        var klass = IL2CPP.il2cpp_object_get_class(mgr);
+        _clearMethod = FindInstanceZeroArg(klass, "ClearAllSelectedEntities");
+        _allowMethod = FindInstanceArgc(klass, "IsGroupSelectionAllowedForEntity", 1);
+        if (!TryFindSelect(klass, out _selectMethod, out _selectBoolFirst, out var paramText))
+        {
+            _groupWhy = "SelectEntity " + paramText + " " + MethodNames(klass);
+            return false;
+        }
+
+        _groupWhy = "params=" + paramText +
+                    " ClearAll=" + (_clearMethod != IntPtr.Zero ? "yes" : "missing") +
+                    " allow=" + (_allowMethod != IntPtr.Zero ? "yes" : "missing");
+        Plugin.LogSrc.LogInfo("[MS][select] " + _groupWhy);
+        return true;
+    }
+
+    static bool TryFindSelect(IntPtr klass, out IntPtr method, out bool boolFirst, out string why)
+    {
+        method = IntPtr.Zero;
+        boolFirst = false;
+        why = "";
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var found = IntPtr.Zero;
+            var count = 0;
+            var iter = IntPtr.Zero;
+            while (true)
+            {
+                var candidate = IL2CPP.il2cpp_class_get_methods(current, ref iter);
+                if (candidate == IntPtr.Zero)
+                    break;
+                if (IL2CPP.il2cpp_method_get_declaring_type(candidate) != current)
+                    continue;
+                if (!(IL2CPP.il2cpp_method_get_name_(candidate) ?? "").Equals("SelectEntity", StringComparison.Ordinal))
+                    continue;
+                if (!IL2CPP.il2cpp_method_is_instance(candidate))
+                    continue;
+                if (IL2CPP.il2cpp_method_get_param_count(candidate) != 2)
+                    continue;
+                found = candidate;
+                count++;
+            }
+
+            if (count == 0)
+                continue;
+            if (count != 1)
+            {
+                why = "count=" + count;
+                return false;
+            }
+
+            var first = IL2CPP.il2cpp_method_get_param(found, 0);
+            var second = IL2CPP.il2cpp_method_get_param(found, 1);
+            var firstBool = IsBoolType(first);
+            var secondBool = IsBoolType(second);
+            why = ParamList(found);
+            if (firstBool == secondBool)
+            {
+                why = "bool slots " + why;
+                return false;
+            }
+
+            method = found;
+            boolFirst = firstBool;
+            return true;
+        }
+
+        why = why.Length == 0 ? "missing" : why;
+        return false;
+    }
+
+    static bool IsBoolType(IntPtr type)
+    {
+        if (type == IntPtr.Zero)
+            return false;
+        if (IL2CPP.il2cpp_type_get_type(type) == BoolKind)
+            return true;
+        var name = IL2CPP.il2cpp_type_get_name_(type) ?? "";
+        return name.IndexOf("Boolean", StringComparison.Ordinal) >= 0;
+    }
+
+    static void InvokeClear(IntPtr mgr)
+    {
+        if (_clearMethod == IntPtr.Zero)
+            return;
+        var exc = IntPtr.Zero;
+        unsafe
+        {
+            void** none = default;
+            IL2CPP.il2cpp_runtime_invoke(_clearMethod, mgr, none, ref exc);
+        }
+
+        if (exc != IntPtr.Zero)
+            Plugin.LogSrc.LogError("[MS][select] ClearAllSelectedEntities exception " + ClassName(exc));
+    }
+
+    static unsafe bool InvokeSelect(IntPtr mgr, IntPtr entity)
+    {
+        var exc = IntPtr.Zero;
+        var obj = entity;
+        var flag = 1;
+        var argv = stackalloc void*[2];
+        if (_selectBoolFirst)
+        {
+            argv[0] = &flag;
+            argv[1] = &obj;
+        }
+        else
+        {
+            argv[0] = &obj;
+            argv[1] = &flag;
+        }
+
+        IL2CPP.il2cpp_runtime_invoke(_selectMethod, mgr, argv, ref exc);
+        if (exc == IntPtr.Zero)
+            return true;
+        if (!_selectThrew)
+        {
+            _selectThrew = true;
+            Plugin.LogSrc.LogError("[MS][select] SelectEntity exception " + ClassName(exc));
+        }
+
+        return false;
+    }
+
+    static unsafe bool InvokeBoolPtr(IntPtr method, IntPtr obj, IntPtr arg)
+    {
+        var exc = IntPtr.Zero;
+        var value = arg;
+        var argv = stackalloc void*[1];
+        argv[0] = &value;
+        var ret = IL2CPP.il2cpp_runtime_invoke(method, obj, argv, ref exc);
+        if (exc != IntPtr.Zero || ret == IntPtr.Zero)
+            return false;
+        return Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0;
+    }
+
+    static IntPtr FindInstanceArgc(IntPtr klass, string methodName, uint argc)
+    {
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var found = IntPtr.Zero;
+            var count = 0;
+            var iter = IntPtr.Zero;
+            while (true)
+            {
+                var method = IL2CPP.il2cpp_class_get_methods(current, ref iter);
+                if (method == IntPtr.Zero)
+                    break;
+                if (IL2CPP.il2cpp_method_get_declaring_type(method) != current)
+                    continue;
+                if (!(IL2CPP.il2cpp_method_get_name_(method) ?? "").Equals(methodName, StringComparison.Ordinal))
+                    continue;
+                if (!IL2CPP.il2cpp_method_is_instance(method))
+                    continue;
+                if (IL2CPP.il2cpp_method_get_param_count(method) != argc)
+                    continue;
+                found = method;
+                count++;
+            }
+
+            if (count == 1)
+                return found;
+            if (count > 1)
+                return IntPtr.Zero;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static string MethodNames(IntPtr klass)
+    {
+        var text = "";
+        var listed = 0;
+        var iter = IntPtr.Zero;
+        while (listed < 8)
+        {
+            var method = IL2CPP.il2cpp_class_get_methods(klass, ref iter);
+            if (method == IntPtr.Zero)
+                break;
+            text += " " + (IL2CPP.il2cpp_method_get_name_(method) ?? "?") + "/" + IL2CPP.il2cpp_method_get_param_count(method);
+            listed++;
+        }
+
+        return text.Length == 0 ? "no methods" : text;
     }
 
     static unsafe IntPtr FindClass(string namespaze, string name)

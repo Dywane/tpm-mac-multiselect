@@ -1,5 +1,7 @@
 # ITHM Task5 Shift drag select (MS 0.4.26)
 
+Task5 HIT passed on this build (`3947a04`). `HIT count=16` and `HIT count=21` after `enter StartGameDragSelect`. Release still opens the retail delete confirm because mode 0 is Demolish. MS 0.4.27 skips that prompt and calls `SelectEntity`. See `docs/evidence/ithm-select-0.4.27.md`.
+
 **MS:** 0.4.26
 **Host:** 0.4.0. Do not replace the Host DLL.
 **Live drag:** still for the build machine. This VM cannot run the game.
