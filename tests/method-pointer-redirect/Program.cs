@@ -156,7 +156,7 @@ internal static class Program
         Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
-        Expect(plugin.Contains("0.4.18"), "version 0.4.18");
+        Expect(plugin.Contains("0.4.19"), "version 0.4.19");
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
@@ -164,6 +164,7 @@ internal static class Program
         Expect(sample.Contains("il2cpp_class_is_valuetype"), "checks a valuetype hover argument");
         Expect(sample.Contains("il2cpp_type_is_byref"), "byref valuetype uses the pointer ABI");
         Expect(sample.Contains("HoverByrefThunk"), "byref thunk reads the struct pointer");
+        Expect(sample.Contains("[MS][hover] enter OnCursorHoverStart"), "thunk logs enter before the selected read");
         Expect(sample.Contains("ValueFieldOffset.TryUnbox"), "boxed field offsets are unboxed");
         Expect(sample.Contains("il2cpp_class_value_size"), "reads the valuetype size");
         Expect(sample.Contains("LayoutKind.Explicit"), "mirrors the valuetype for the native ABI");
