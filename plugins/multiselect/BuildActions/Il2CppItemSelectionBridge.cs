@@ -69,7 +69,7 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
         }
         catch (Exception ex)
         {
-            NoteMiss(ex.GetType().Name);
+            NoteMiss(ExceptionText.Format(ex));
             _lastHit = IntPtr.Zero;
             return false;
         }

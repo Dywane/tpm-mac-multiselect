@@ -159,7 +159,9 @@ internal static class Program
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
-        Expect(sample.Contains("InnerException"), "arm failure keeps InnerException");
+        var formatted = File.ReadAllText(Path.Combine(root, "plugins/multiselect/Hooks/ExceptionText.cs"));
+        Expect(formatted.Contains("InnerException"), "formatter walks InnerException");
+        Expect(sample.Contains("ExceptionText.Format"), "arm failure uses the formatter");
         Expect(!sample.Contains("ClassInjector"), "sample has no ClassInjector");
         Expect(!sample.Contains("harmony.Patch"), "sample has no harmony.Patch");
         Expect(!sample.Contains("OnBecomeActive"), "sample does not retarget OnBecomeActive");
