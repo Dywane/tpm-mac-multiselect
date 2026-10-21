@@ -15,7 +15,6 @@ internal static class Program
         Vtable_refuses_a_mismatch_or_a_bad_slot();
         Hook_source_does_not_rewrite_game_assembly();
         Hover_sample_does_not_inject_a_monobehaviour();
-        Boxed_hover_field_offset_unboxes_to_the_value();
         Exception_text_keeps_the_inner_exception();
         if (_fails != 0)
         {
@@ -179,23 +178,6 @@ internal static class Program
         Expect(!sample.Contains("OnBecomeActive"), "sample does not retarget OnBecomeActive");
         Expect(place.Contains("TryArmEnterMethodPointer"), "enter arm remains");
         Expect(place.Contains("HoverSampleHook.Arm"), "sample arms after placement ready");
-    }
-
-    static void Boxed_hover_field_offset_unboxes_to_the_value()
-    {
-        Expect(Unbox(16, 8, 16, 0), "Selected boxed 16 fits size 16 at 0");
-        Expect(Unbox(24, 8, 16, 8), "second boxed field fits size 16 at 8");
-        Expect(Unbox(16, 8, 32, 0), "boxed offset that also fits raw prefers the header");
-        Expect(Unbox(0, 8, 16, 0), "already unboxed start");
-        Expect(Unbox(8, 8, 16, 8), "already unboxed mid stays");
-        Expect(!ValueFieldOffset.TryUnbox(32, 8, 16, out _), "still outside after the header");
-        Expect(!ValueFieldOffset.TryUnbox(16, 0, 16, out _), "zero width");
-        Expect(!ValueFieldOffset.TryUnbox(-1, 8, 16, out _), "negative offset");
-    }
-
-    static bool Unbox(int raw, int width, int size, int expected)
-    {
-        return ValueFieldOffset.TryUnbox(raw, width, size, out var at) && at == expected;
     }
 
     static void Exception_text_keeps_the_inner_exception()

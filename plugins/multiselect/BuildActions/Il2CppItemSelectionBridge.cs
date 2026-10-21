@@ -16,11 +16,11 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
     public Il2CppItemSelectionBridge(ManualLogSource? log = null)
     {
         _log = log ?? Plugin.LogSrc;
-        _log.LogInfo("[MS][bridge] hover read is the object field of BuildLogic.OnCursorHoverStart");
+        _log.LogInfo("[MS][bridge] no hover field. Stub has no Selected caller. OnUpdate is the armed call.");
     }
 
     public bool TryGetHoveredSelectable(out object item)
-        => TryGetHoveredSelectable(IntPtr.Zero, "OnCursorHoverStart", out item);
+        => TryGetHoveredSelectable(IntPtr.Zero, "none", out item);
 
     internal bool TryGetHoveredSelectable(IntPtr hovered, string field, out object item)
     {
