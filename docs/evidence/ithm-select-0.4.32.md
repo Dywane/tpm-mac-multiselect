@@ -1,3 +1,5 @@
+Do not deploy this build. Shift while the cursor was still `CursorModePlaceItem` entered `StartGameDragSelect`, installed the prompt skip, wrote foundations false, and called `ResetDragCursorIcon`. The process then SIGSEGV at `0x0409984405` (`GameAssembly+0x2e9548`). Finish and PlaceItem never ran. MS 0.4.33 refuses that arm unless the mode is `CursorModeSelect`. See `docs/evidence/ithm-select-0.4.33.md`.
+
 # ITHM Task5 PlaceItem on the BuildLogic instance (MS 0.4.32)
 
 **MS:** 0.4.32

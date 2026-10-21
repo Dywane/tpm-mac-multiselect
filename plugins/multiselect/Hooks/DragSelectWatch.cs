@@ -379,6 +379,7 @@ static class DragSelectWatch
             var modeName = ClassName(mode);
             var modeClass = mode == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(mode);
             var select = IsSelectMode(modeClass, modeName);
+            var armSelect = IsArmSelect(modeClass, modeName);
             if (_phase != Phase.Idle || IsDragMode(mode, modeName))
                 WatchDrag(self, mode, modeName);
             else if (_promptInstalled)
@@ -400,6 +401,12 @@ static class DragSelectWatch
             if (_phase != Phase.Idle)
                 return;
             var edge = ShiftPressed(out var down);
+            if (edge && !armSelect)
+            {
+                Plugin.LogSrc.LogInfo(
+                    "[MS][select] arm refuse mode=" + modeName + " reason=select-only");
+            }
+
             if (down && !select)
             {
                 if (_ignoredMode == modeName)
@@ -412,7 +419,7 @@ static class DragSelectWatch
                 return;
             }
 
-            if (!edge || !select)
+            if (!edge || !armSelect)
                 return;
             _ignoredMode = null;
             CallStart(self);
@@ -532,6 +539,16 @@ static class DragSelectWatch
 
     static void CallStart(IntPtr self)
     {
+        var live = ReadMode(self);
+        var liveName = ClassName(live);
+        var liveClass = live == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(live);
+        if (!IsArmSelect(liveClass, liveName))
+        {
+            Plugin.LogSrc.LogInfo(
+                "[MS][select] arm refuse mode=" + liveName + " reason=select-only");
+            return;
+        }
+
         if (!_buildInited && _buildClass != IntPtr.Zero)
         {
             IL2CPP.il2cpp_runtime_class_init(_buildClass);
@@ -674,6 +691,13 @@ static class DragSelectWatch
             IL2CPP.il2cpp_object_get_class(mode) == _dragClass)
             return true;
         return name == "CursorModeGameDragSelect";
+    }
+
+    static bool IsArmSelect(IntPtr klass, string name)
+    {
+        if (klass != IntPtr.Zero && _selectClass != IntPtr.Zero && klass == _selectClass)
+            return true;
+        return name == "CursorModeSelect";
     }
 
     static bool IsSelectMode(IntPtr klass, string name)
