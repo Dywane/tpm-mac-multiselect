@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.15)
 
+Superseded by `docs/evidence/ithm-hover-0.4.16.md`. The live log at 2026-10-21 12:18 (MS 0.4.15, tip `bfc14ee`) is `OnCursorHoverStart NOT armed: param kind=0x11`. That valuetype was not forwarded. Do not deploy this build.
+
 **MS:** 0.4.15
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
 **Live HIT:** still for the build machine. This VM cannot run the game.

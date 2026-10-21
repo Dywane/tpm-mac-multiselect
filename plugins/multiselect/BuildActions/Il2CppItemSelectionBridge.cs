@@ -16,13 +16,13 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
     public Il2CppItemSelectionBridge(ManualLogSource? log = null)
     {
         _log = log ?? Plugin.LogSrc;
-        _log.LogInfo("[MS][bridge] hover read is BuildLogic.OnCursorHoverStart");
+        _log.LogInfo("[MS][bridge] hover read is the object field of BuildLogic.OnCursorHoverStart");
     }
 
     public bool TryGetHoveredSelectable(out object item)
-        => TryGetHoveredSelectable(IntPtr.Zero, out item);
+        => TryGetHoveredSelectable(IntPtr.Zero, "OnCursorHoverStart", out item);
 
-    internal bool TryGetHoveredSelectable(IntPtr hovered, out object item)
+    internal bool TryGetHoveredSelectable(IntPtr hovered, string field, out object item)
     {
         item = null!;
         if (!PlacementReadyHook.IsPlacementReady)
@@ -32,7 +32,7 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
         {
             if (hovered == IntPtr.Zero)
             {
-                NoteMiss("OnCursorHoverStart arg null");
+                NoteMiss(field + " null");
                 _lastHit = IntPtr.Zero;
                 return false;
             }
@@ -41,7 +41,7 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
             if (hovered != _lastHit)
             {
                 _lastHit = hovered;
-                _log.LogInfo($"[MS][hover] HIT type={NativeTypeName(hovered)} field=OnCursorHoverStart");
+                _log.LogInfo($"[MS][hover] HIT type={NativeTypeName(hovered)} field={field}");
             }
 
             return true;

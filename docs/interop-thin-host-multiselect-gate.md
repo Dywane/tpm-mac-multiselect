@@ -90,20 +90,20 @@
 
 ---
 
-## Task 5 — hover（MS **0.4.15**；活体 HIT **待建造本机**）
+## Task 5 — hover（MS **0.4.16**；活体 HIT **待建造本机**）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 读法 | 静态 `BuildLogic.OnCursorHoverStart` 的唯一参数，且该参数必须是引用类型。0.4.13 的 `WorldCursorState` focus 在放置悬停为 null，已停用。0.4.14 的 `<Item>k__BackingField` 是手上物品，会误过悬停门禁，已撤回。 | `Il2CppItemSelectionBridge.TryGetHoveredSelectable` |
-| 禁止 | `IRuntimeBridge.TryInvoke` 主路径。不改 OnBecomeActive 序言。不恢复 poll。不用 `ClassInjector` / 自定义 MonoBehaviour / `AddComponent`。参数是值类型时不改写 prologue。 | 源码 |
-| 取样 | `PLACEMENT_READY` 之后保留 `CursorManager.OnUpdate` 的 methodPointer swap。同一时机对 `OnCursorHoverStart` 再做 methodPointer swap（不写 vtable）。Thunk 先调原方法，再把参数交给 hover 读。同一指针只打一行 HIT。 | `Hooks/HoverSampleHook.cs` |
+| 读法 | 静态 `BuildLogic.OnCursorHoverStart` 的值类型参数里唯一的非字符串对象字段。0.4.15 活体 `param kind=0x11` 未挂上。0.4.13 的 `WorldCursorState` focus 与 0.4.14 的 `<Item>k__BackingField` 已停用。 | `Il2CppItemSelectionBridge.TryGetHoveredSelectable` |
+| 禁止 | `IRuntimeBridge.TryInvoke` 主路径。不改 OnBecomeActive 序言。不恢复 poll。不用 `ClassInjector` / 自定义 MonoBehaviour / `AddComponent`。值类型不改写 prologue。多个对象字段不选一个。 | 源码 |
+| 取样 | `PLACEMENT_READY` 之后保留 `CursorManager.OnUpdate` 的 methodPointer swap。同一时机按显式布局镜像值类型参数，再对 `OnCursorHoverStart` 做 methodPointer swap（不写 vtable）。同一指针只打一行 HIT。 | `Hooks/HoverSampleHook.cs` |
 | 冷启 | 无 `HoverWatch failed`，无 `InjectorHelpers` TypeInitializationException。 | 0.4.12 失败见 `docs/evidence/ithm-hover-0.4.12.md` |
-| 版本 | Multiselect **0.4.15** / Host **0.4.0** | `Plugin.PluginVersion` |
-| 活体 | 至少一行 `[MS][hover] HIT type=` 且 `field=OnCursorHoverStart` | 待 `docs/evidence/ithm-hover-x64.log` |
+| 版本 | Multiselect **0.4.16** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 活体 | 至少一行 `[MS][hover] HIT type=`，且 `field=` 与 event 行的字段名相同 | 待 `docs/evidence/ithm-hover-x64.log` |
 
 ### 建造本机复现
 
-先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.13 或 0.4.14 的 DLL。步骤细节在 `docs/evidence/ithm-hover-0.4.15.md`。0.4.13 活体摘录也在那一页。
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.13、0.4.14 或 0.4.15 的 DLL。步骤细节在 `docs/evidence/ithm-hover-0.4.16.md`。0.4.15 活体摘录也在那一页。
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"
@@ -117,16 +117,14 @@ dotnet build plugins/multiselect/TpmMacMultiselect.csproj -c Release
 3. 打开建造，进入物品放置。
 4. 确认同一份日志有 `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`。
 5. 确认随后有 `[MS][hover] sample armed via=CursorManager.OnUpdate`。
-6. 确认随后有 `[MS][hover] event armed via=BuildLogic.OnCursorHoverStart`，且行内有 `reference`。
+6. 确认随后有 `[MS][hover] event armed via=BuildLogic.OnCursorHoverStart`。`param=` 是值类型名，`field=` 是结构字段名。
 7. 悬停一个世界可选物件。光标上已拿着的物品不算这次通过。
-8. 在同一份日志里找 `[MS][hover] HIT type=`。`field=` 应为 `OnCursorHoverStart`。
+8. 在同一份日志里找 `[MS][hover] HIT type=`。`field=` 与第 6 步的字段名相同。
 9. 把含 HIT 的日志摘到 `docs/evidence/ithm-hover-x64.log`。
 
 没有 HIT 时，把 `NOT armed` 或 `MISS reason=` 一并摘录。不要把 MISS 当成 §4.6 hover 通过。
 
-若已有 `event armed`，悬停后仍既无 HIT 也无 `MISS reason=OnCursorHoverStart arg null`，说明 `OnCursorHoverStart` 不是放置悬停的调用路径。这也不是通过。
-
-若日志是 `OnCursorHoverStart NOT armed: param kind=0xNN`，参数不是引用类型。停在这一行。不要改写 prologue，不要打开 poll。
+`NOT armed` 行现在带 `param=` 和 `fields=`。多个对象字段时，日志是 `MISS reason=OnCursorHoverStart multiple refs`。这两种都不是通过。
 
 挂接失败时错误行带上 `InnerException` 链（`-->` 连接）。0.4.12 的 `HoverWatch failed` 没有这段。
 
