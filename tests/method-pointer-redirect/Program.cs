@@ -155,12 +155,15 @@ internal static class Program
         Expect(!plugin.Contains("ClassInjector"), "Plugin has no ClassInjector");
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
-        Expect(plugin.Contains("0.4.15"), "version 0.4.15");
+        Expect(plugin.Contains("0.4.16"), "version 0.4.16");
         Expect(File.Exists(samplePath), "HoverSampleHook.cs exists");
         var sample = File.Exists(samplePath) ? File.ReadAllText(samplePath) : "";
         Expect(sample.Contains("CursorManager") && sample.Contains("OnUpdate"), "samples CursorManager.OnUpdate");
         Expect(sample.Contains("OnCursorHoverStart"), "arms BuildLogic.OnCursorHoverStart");
-        Expect(sample.Contains("il2cpp_class_is_valuetype"), "refuses a valuetype hover argument");
+        Expect(sample.Contains("il2cpp_class_is_valuetype"), "checks a valuetype hover argument");
+        Expect(sample.Contains("il2cpp_class_value_size"), "reads the valuetype size");
+        Expect(sample.Contains("LayoutKind.Explicit"), "mirrors the valuetype for the native ABI");
+        Expect(sample.Contains("param="), "arm and refuse lines name the param");
         var bridgePath = Path.Combine(root, "plugins/multiselect/BuildActions/Il2CppItemSelectionBridge.cs");
         var bridge = File.Exists(bridgePath) ? File.ReadAllText(bridgePath) : "";
         Expect(!bridge.Contains("_elementWithFocus"), "hover read drops UI focus");
