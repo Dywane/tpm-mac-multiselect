@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.21)
 
+Do not deploy this build. Cold start on 2026-10-21 ~15:46 stayed on a black screen after `Chainloader startup complete`. The ECS arm never logged. MS 0.4.22 removes it. See `docs/evidence/ithm-hover-0.4.22.md`.
+
 **MS:** 0.4.21
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
 **Live HIT:** still for the build machine. This VM cannot run the game.

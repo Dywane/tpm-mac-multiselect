@@ -161,7 +161,7 @@ public static class PlacementReadyHook
         _logged = true;
         _via = via;
         Log.LogInfo($"[MS][hook] PLACEMENT_READY via={via}");
-        HoverSampleHook.Arm();
+        SelectPathProbe.LogOnce();
     }
 
     static void TryDetourEnterLike(IntPtr klass, string typeLabel)

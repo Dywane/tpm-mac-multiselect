@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** MS **0.4.21** 停掉 `BuildLogic.OnCursorHoverStart`。Win dump RVA `0x3791E0` 是 EMPTY_STUB_SHARED。HIT 读 `ESCursorSelectResult.Result`，偏移来自 Mac 字段元数据。`CursorManager.OnUpdate` 仍是 sample。类型缺失就停。细节在 `docs/evidence/ithm-hover-0.4.21.md`。
+**状态（2026-10-21）：** MS **0.4.22** 删掉 `ESCursorSelectResult` 与 `CursorManager.OnUpdate` 的 swap。0.4.21 冷启黑屏发生在这两处执行之前。SeanB 对照说明多选是框选组，不是悬停。0.4.22 在 `PLACEMENT_READY` 后只解析那些类型名。细节在 `docs/evidence/ithm-hover-0.4.22.md`。
 
 **执行方：** demo建造  
 

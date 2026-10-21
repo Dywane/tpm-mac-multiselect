@@ -16,7 +16,7 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
     public Il2CppItemSelectionBridge(ManualLogSource? log = null)
     {
         _log = log ?? Plugin.LogSrc;
-        _log.LogInfo("[MS][bridge] hover field is ESCursorSelectResult.Result.");
+        _log.LogInfo("[MS][bridge] no hover field. SeanB names are probed after PLACEMENT_READY.");
     }
 
     public bool TryGetHoveredSelectable(out object item)

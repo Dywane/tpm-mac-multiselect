@@ -90,20 +90,20 @@
 
 ---
 
-## Task 5 — hover（MS **0.4.21**；`ESCursorSelectResult.Result`）
+## Task 5 — 框选名探测（MS **0.4.22**；不 arm `ESCursorSelectResult`）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 读法 | `ESCursorSelectResult.OnUpdate` 在原方法返回后读实例字段 `Result`。偏移来自 `il2cpp_field_get_offset`。非空打 `HIT type=… field=Result`。空打一次 `MISS reason=Result null`。Win dump 里 `BuildLogic.OnCursorHoverStart` 的 RVA `0x3791E0` 是 EMPTY_STUB_SHARED，对应 0.4.19 FAIL_NO_ENTER，不再 arm。0.4.13 的 `WorldCursorState` focus 与 0.4.14 的 `<Item>k__BackingField` 已停用。 | `docs/evidence/ithm-hover-0.4.21.md` |
-| 禁止 | `IRuntimeBridge.TryInvoke` 主路径。不改 OnBecomeActive 序言。不恢复 poll。不用 `ClassInjector` / 自定义 MonoBehaviour / `AddComponent`。不改写 prologue。类型找不到就停，不改挂 `CursorUpdate`。不把 Win 字段注释 `0x18` 写进源码。 | 源码 |
-| 取样 | `PLACEMENT_READY` 之后 swap `ESCursorSelectResult.OnUpdate` 的 methodPointer 与 vtable。Thunk 先打 `enter ESCursorSelectResult.OnUpdate`，再读 `Result`。`CursorManager.OnUpdate` 仍是 sample，只打 enter。 | `Hooks/HoverSampleHook.cs` |
-| 冷启 | 无 `HoverWatch failed`，无 `InjectorHelpers` TypeInitializationException。 | 0.4.12 失败见 `docs/evidence/ithm-hover-0.4.12.md` |
-| 版本 | Multiselect **0.4.21** / Host **0.4.0** | `Plugin.PluginVersion` |
-| 活体 | 有 `OnCursorHoverStart retired`、`event armed via=ESCursorSelectResult.OnUpdate`、`field=Result`、`enter ESCursorSelectResult.OnUpdate`，以及 `HIT … field=Result` 或 `MISS reason=Result null`。没有 `event armed via=BuildLogic.OnCursorHoverStart`。 | 待 `docs/evidence/ithm-hover-x64.log` |
+| 读法 | 不读悬停字段。0.4.21 冷启在 `Chainloader startup complete` 后黑屏，且日志里没有 `ESCursorSelectResult` 的 enter。SeanB `d0bceb63` 的路径是 `StartGameDragSelect` → `CursorModeGameDragSelect._itemsSelected` → `LevelEditorGroupSelectionManager.SelectEntity` → `BuildLogic.PlaceItem`。0.4.22 在 `PLACEMENT_READY` 之后只解析这些名字和字段偏移。`OnCursorHoverStart` 仍停用。 | `docs/evidence/ithm-hover-0.4.22.md` |
+| 禁止 | `IRuntimeBridge.TryInvoke` 主路径。不恢复 poll。不用 `ClassInjector`。不改写 prologue，不写 `0xC3`。不 swap `ESCursorSelectResult.OnUpdate` 或 `CursorManager.OnUpdate`。不调用 `il2cpp_runtime_invoke`。 | 源码 |
+| 取样 | 冷启只保留已经活体通过的 `CursorModePlaceItem.OnBecomeActive` methodPointer swap。进入放置后 `SelectPathProbe.LogOnce` 打一行 `[MS][select] probe`。 | `Hooks/SelectPathProbe.cs` |
+| 冷启 | `Chainloader startup complete` 之后应进入主菜单。无 `HoverWatch failed`，无 `InjectorHelpers`。 | 0.4.21 黑屏见 `docs/evidence/ithm-hover-0.4.22.md` |
+| 版本 | Multiselect **0.4.22** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 活体 | 冷启有 `ESCursorSelectResult arm removed` 和主菜单。放置后有一行 probe，带 `_itemsSelected=offset=`。没有 `enter ESCursorSelectResult.OnUpdate`。 | 待 `docs/evidence/ithm-hover-x64.log` |
 
 ### 建造本机复现
 
-先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.20 的 DLL。步骤细节在 `docs/evidence/ithm-hover-0.4.21.md`。
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.21 的 DLL。步骤细节在 `docs/evidence/ithm-hover-0.4.22.md`。
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"
@@ -113,15 +113,13 @@ dotnet build plugins/multiselect/TpmMacMultiselect.csproj -c Release
 把 `plugins/multiselect/bin/Release/TpmMacMultiselect.dll` 拷到游戏 `BepInEx/plugins/`。从游戏根目录运行 `./run_bepinex.sh`。
 
 1. 冷启后看 `BepInEx/LogOutput.log`。里面不能有 `HoverWatch failed` 或 `InjectorHelpers`。
-2. 进入关卡。
-3. 打开建造，进入物品放置。
-4. 确认同一份日志有 `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`。
-5. 确认有 `[MS][hover] OnCursorHoverStart retired`、`sample armed via=CursorManager.OnUpdate`，以及 `event armed via=ESCursorSelectResult.OnUpdate` 且带 `field=Result` 和活体 `offset=`。
-6. 悬停一个可放置物件。确认有 `enter ESCursorSelectResult.OnUpdate`，随后有 `HIT type=` 且 `field=Result`，或一行 `MISS reason=Result null`。
-7. 确认没有 `event armed via=BuildLogic.OnCursorHoverStart`。
-8. 把 retired、event armed、enter、HIT 或 MISS 摘到 `docs/evidence/ithm-hover-x64.log`。
+2. 确认有 `Loading [TPM Mac Multi-Select 0.4.22]`、`ESCursorSelectResult arm removed`、`Chainloader startup complete`，然后出现主菜单。黑屏就停，不要换回 0.4.21。
+3. 进入关卡，打开建造，进入物品放置。
+4. 确认有 `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)` 和一行 `[MS][select] probe`。
+5. 确认没有 `enter ESCursorSelectResult.OnUpdate`，也没有 `event armed via=BuildLogic.OnCursorHoverStart`。
+6. 把冷启行和 probe 行摘到 `docs/evidence/ithm-hover-x64.log`。
 
-没有 `enter ESCursorSelectResult.OnUpdate` 表示这条 vtable 不是调用路径。不要把 `enter CursorManager.OnUpdate` 当成 HIT。
+probe 行不是 HIT。它只说明 SeanB 用过的类型名在 Mac 上是否存在。
 
 挂接失败时错误行带上 `InnerException` 链（`-->` 连接）。0.4.12 的 `HoverWatch failed` 没有这段。
 
