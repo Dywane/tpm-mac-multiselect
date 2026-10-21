@@ -37,6 +37,15 @@ static class DragSelectWatch
 
     static IntPtr _startMethod;
     static IntPtr _keyMethod;
+    static IntPtr _shiftName;
+    static IntPtr _keyboardClass;
+    static IntPtr _keyboardCurrent;
+    static IntPtr _leftShiftMember;
+    static bool _leftShiftIsField;
+    static int _leftShiftOffset;
+    static IntPtr _wasPressedMethod;
+    static bool _shiftHeld;
+    static string _shiftHow = "";
     static IntPtr _instanceMember;
     static bool _instanceIsMethod;
     static bool _startIsStatic;
@@ -102,9 +111,9 @@ static class DragSelectWatch
                 return;
             }
 
-            if (!TryFindKeyDown(out _keyMethod, out var keyWhy))
+            if (!TryResolveShift(out _shiftHow))
             {
-                GiveUp("UnityEngine.Input.GetKeyDown " + keyWhy);
+                GiveUp("Left Shift " + _shiftHow);
                 return;
             }
 
@@ -171,6 +180,7 @@ static class DragSelectWatch
                     "[MS][select] watch armed via=CursorManager.OnUpdate after PLACEMENT_READY" +
                     " param=" + paramName +
                     " instance=" + _instanceHow +
+                    " shift=" + _shiftHow +
                     " _mode=" + _modeOffset +
                     " _isDragging=" + _draggingOffset +
                     " _itemsSelected=" + _itemsOffset +
@@ -362,18 +372,55 @@ static class DragSelectWatch
     {
         try
         {
-            return InvokeBool(_keyMethod, IntPtr.Zero, LeftShift);
+            var down = ReadShiftDown();
+            var edge = down && !_shiftHeld;
+            _shiftHeld = down;
+            return edge;
         }
         catch (Exception ex)
         {
             if (!_keyThrew)
             {
                 _keyThrew = true;
-                Plugin.LogSrc.LogError("[MS][select] GetKeyDown threw: " + ExceptionText.Format(ex));
+                Plugin.LogSrc.LogError("[MS][select] shift read threw: " + ExceptionText.Format(ex));
             }
 
             return false;
         }
+    }
+
+    static bool ReadShiftDown()
+    {
+        if (_wasPressedMethod != IntPtr.Zero)
+            return ReadKeyboardEdge();
+        if (_shiftName != IntPtr.Zero)
+            return InvokeBoolObject(_keyMethod, _shiftName);
+        return InvokeBool(_keyMethod, IntPtr.Zero, LeftShift);
+    }
+
+    static bool ReadKeyboardEdge()
+    {
+        if (_keyboardClass != IntPtr.Zero)
+            IL2CPP.il2cpp_runtime_class_init(_keyboardClass);
+        var keyboard = InvokeObject(_keyboardCurrent, IntPtr.Zero);
+        if (keyboard == IntPtr.Zero)
+            return false;
+        var key = _leftShiftIsField
+            ? Marshal.ReadIntPtr(keyboard, _leftShiftOffset)
+            : InvokeObject(_leftShiftMember, keyboard);
+        if (key == IntPtr.Zero)
+            return false;
+        return InvokeBoolZero(_wasPressedMethod, key);
+    }
+
+    static unsafe bool InvokeBoolZero(IntPtr method, IntPtr obj)
+    {
+        var exc = IntPtr.Zero;
+        void** none = default;
+        var ret = IL2CPP.il2cpp_runtime_invoke(method, obj, none, ref exc);
+        if (exc != IntPtr.Zero || ret == IntPtr.Zero)
+            return false;
+        return Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0;
     }
 
     static IntPtr ReadMode(IntPtr self)
@@ -746,18 +793,61 @@ static class DragSelectWatch
         return ReadStaticObject(_instanceMember);
     }
 
-    static bool TryFindKeyDown(out IntPtr method, out string why)
+    static bool TryResolveShift(out string how)
     {
-        method = IntPtr.Zero;
-        why = "";
-        var klass = FindClass("UnityEngine", "Input");
-        if (klass == IntPtr.Zero)
-        {
-            why = "class missing";
+        how = "";
+        if (TryLegacyShift(out how))
+            return true;
+        if (TryKeyboardShift(out how))
+            return true;
+        how = "missing " + DescribeShiftTypes();
+        return false;
+    }
+
+    static unsafe bool TryLegacyShift(out string how)
+    {
+        how = "";
+        var best = IntPtr.Zero;
+        var bestRank = 0;
+        var bestHow = "";
+        var domain = IL2CPP.il2cpp_domain_get();
+        if (domain == IntPtr.Zero)
             return false;
+        uint count = 0;
+        var assemblies = IL2CPP.il2cpp_domain_get_assemblies(domain, ref count);
+        if (assemblies == null)
+            return false;
+        for (uint i = 0; i < count; i++)
+        {
+            var image = IL2CPP.il2cpp_assembly_get_image(assemblies[i]);
+            if (image == IntPtr.Zero)
+                continue;
+            var klass = IL2CPP.il2cpp_class_from_name(image, "UnityEngine", "Input");
+            if (klass == IntPtr.Zero)
+                continue;
+            if (!TryPickKeyMethod(klass, out var method, out var rank, out var picked))
+                continue;
+            if (rank <= bestRank)
+                continue;
+            best = method;
+            bestRank = rank;
+            bestHow = picked + "@" + (IL2CPP.il2cpp_image_get_name_(image) ?? "?");
         }
 
-        var found = 0;
+        if (best == IntPtr.Zero)
+            return false;
+        _keyMethod = best;
+        _wasPressedMethod = IntPtr.Zero;
+        _shiftName = bestRank == 1 ? IL2CPP.il2cpp_string_new("left shift") : IntPtr.Zero;
+        how = bestHow;
+        return true;
+    }
+
+    static bool TryPickKeyMethod(IntPtr klass, out IntPtr method, out int rank, out string how)
+    {
+        method = IntPtr.Zero;
+        rank = 0;
+        how = "";
         var iter = IntPtr.Zero;
         while (true)
         {
@@ -765,7 +855,9 @@ static class DragSelectWatch
             if (current == IntPtr.Zero)
                 break;
             var name = IL2CPP.il2cpp_method_get_name_(current) ?? "";
-            if (!name.Equals("GetKeyDown", StringComparison.Ordinal))
+            var keyDown = name.Equals("GetKeyDown", StringComparison.Ordinal);
+            var key = name.Equals("GetKey", StringComparison.Ordinal);
+            if (!keyDown && !key)
                 continue;
             if (IL2CPP.il2cpp_method_is_instance(current))
                 continue;
@@ -773,21 +865,248 @@ static class DragSelectWatch
                 continue;
             var type = IL2CPP.il2cpp_method_get_param(current, 0);
             var typeName = type == IntPtr.Zero ? "" : IL2CPP.il2cpp_type_get_name_(type) ?? "";
-            if (typeName.IndexOf("KeyCode", StringComparison.Ordinal) < 0)
-                continue;
-            method = current;
-            why = typeName;
-            found++;
+            var kind = type == IntPtr.Zero ? -1 : IL2CPP.il2cpp_type_get_type(type);
+            var keyLike = typeName.IndexOf("KeyCode", StringComparison.Ordinal) >= 0 || kind == 0x11 || kind == 0x55;
+            var stringLike = typeName.IndexOf("String", StringComparison.Ordinal) >= 0 || kind == 0x0E;
+            var next = 0;
+            var label = "";
+            if (keyDown && keyLike)
+            {
+                next = 3;
+                label = "GetKeyDown(KeyCode)";
+            }
+            else if (key && keyLike)
+            {
+                next = 2;
+                label = "GetKey(KeyCode)";
+            }
+            else if (keyDown && stringLike)
+            {
+                next = 1;
+                label = "GetKeyDown(string)";
+            }
+
+            if (next > rank)
+            {
+                rank = next;
+                method = current;
+                how = label;
+            }
         }
 
-        if (found != 1)
-        {
-            why = "count=" + found;
-            method = IntPtr.Zero;
+        return rank > 0 && method != IntPtr.Zero;
+    }
+
+    static unsafe bool TryKeyboardShift(out string how)
+    {
+        how = "";
+        var domain = IL2CPP.il2cpp_domain_get();
+        if (domain == IntPtr.Zero)
             return false;
+        uint count = 0;
+        var assemblies = IL2CPP.il2cpp_domain_get_assemblies(domain, ref count);
+        if (assemblies == null)
+            return false;
+        for (uint i = 0; i < count; i++)
+        {
+            var image = IL2CPP.il2cpp_assembly_get_image(assemblies[i]);
+            if (image == IntPtr.Zero)
+                continue;
+            var keyboard = IL2CPP.il2cpp_class_from_name(image, "UnityEngine.InputSystem", "Keyboard");
+            if (keyboard == IntPtr.Zero)
+                continue;
+            var current = FindStaticZeroArg(keyboard, "get_current");
+            if (current == IntPtr.Zero)
+                continue;
+            var keyClass = IntPtr.Zero;
+            var member = IntPtr.Zero;
+            var isField = false;
+            var offset = 0;
+            var getter = FindInstanceZeroArg(keyboard, "get_leftShiftKey");
+            if (getter != IntPtr.Zero)
+            {
+                member = getter;
+                var ret = IL2CPP.il2cpp_method_get_return_type(getter);
+                keyClass = ret == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_class_from_type(ret);
+            }
+            else if (TryFindInstanceField(keyboard, "leftShiftKey", out offset, out _) ||
+                     TryFindInstanceField(keyboard, "<leftShiftKey>k__BackingField", out offset, out _))
+            {
+                isField = true;
+                member = IntPtr.Zero;
+                keyClass = FieldClass(keyboard, offset);
+            }
+
+            if (keyClass == IntPtr.Zero)
+                continue;
+            var pressed = FindInstanceZeroArg(keyClass, "get_wasPressedThisFrame");
+            if (pressed == IntPtr.Zero)
+                continue;
+            _keyboardClass = keyboard;
+            _keyboardCurrent = current;
+            _leftShiftMember = member;
+            _leftShiftIsField = isField;
+            _leftShiftOffset = offset;
+            _wasPressedMethod = pressed;
+            _keyMethod = IntPtr.Zero;
+            how = "Keyboard.leftShiftKey.wasPressedThisFrame@" + (IL2CPP.il2cpp_image_get_name_(image) ?? "?");
+            return true;
         }
 
-        return true;
+        return false;
+    }
+
+    static IntPtr FieldClass(IntPtr klass, int offset)
+    {
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
+            if (field == IntPtr.Zero)
+                break;
+            if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) != 0)
+                continue;
+            if (unchecked((int)IL2CPP.il2cpp_field_get_offset(field)) != offset)
+                continue;
+            var type = IL2CPP.il2cpp_field_get_type(field);
+            return type == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_class_from_type(type);
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static unsafe string DescribeShiftTypes()
+    {
+        var text = "";
+        var domain = IL2CPP.il2cpp_domain_get();
+        if (domain == IntPtr.Zero)
+            return "domain-missing";
+        uint count = 0;
+        var assemblies = IL2CPP.il2cpp_domain_get_assemblies(domain, ref count);
+        if (assemblies == null)
+            return "assemblies-missing";
+        for (uint i = 0; i < count; i++)
+        {
+            var image = IL2CPP.il2cpp_assembly_get_image(assemblies[i]);
+            if (image == IntPtr.Zero)
+                continue;
+            var imageName = IL2CPP.il2cpp_image_get_name_(image) ?? "?";
+            text += DescribeOne(image, imageName, "UnityEngine", "Input");
+            text += DescribeOne(image, imageName, "UnityEngine.InputSystem", "Keyboard");
+        }
+
+        return text.Length == 0 ? "UnityEngine.Input=missing Keyboard=missing" : text;
+    }
+
+    static string DescribeOne(IntPtr image, string imageName, string namespaze, string name)
+    {
+        var klass = IL2CPP.il2cpp_class_from_name(image, namespaze, name);
+        if (klass == IntPtr.Zero)
+            return "";
+        var methods = 0;
+        var keyDown = 0;
+        var key = 0;
+        var keyDownParams = "";
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var current = IL2CPP.il2cpp_class_get_methods(klass, ref iter);
+            if (current == IntPtr.Zero)
+                break;
+            methods++;
+            var methodName = IL2CPP.il2cpp_method_get_name_(current) ?? "";
+            if (methodName.Equals("GetKeyDown", StringComparison.Ordinal))
+            {
+                keyDown++;
+                if (keyDownParams.Length > 0)
+                    keyDownParams += "|";
+                keyDownParams += ParamList(current);
+            }
+            else if (methodName.Equals("GetKey", StringComparison.Ordinal))
+            {
+                key++;
+            }
+        }
+
+        return " " + imageName + " " + namespaze + "." + name +
+               " methods=" + methods +
+               " GetKeyDown=" + keyDown +
+               (keyDownParams.Length == 0 ? "" : ":" + keyDownParams) +
+               " GetKey=" + key;
+    }
+
+    static string ParamList(IntPtr method)
+    {
+        var count = IL2CPP.il2cpp_method_get_param_count(method);
+        if (count == 0)
+            return "argc0";
+        var text = "";
+        for (uint i = 0; i < count; i++)
+        {
+            if (i > 0)
+                text += ",";
+            var type = IL2CPP.il2cpp_method_get_param(method, i);
+            text += type == IntPtr.Zero ? "?" : IL2CPP.il2cpp_type_get_name_(type) ?? "?";
+        }
+
+        return text;
+    }
+
+    static IntPtr FindInstanceZeroArg(IntPtr klass, string methodName)
+    {
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var found = IntPtr.Zero;
+            var count = 0;
+            var iter = IntPtr.Zero;
+            while (true)
+            {
+                var method = IL2CPP.il2cpp_class_get_methods(current, ref iter);
+                if (method == IntPtr.Zero)
+                    break;
+                if (IL2CPP.il2cpp_method_get_declaring_type(method) != current)
+                    continue;
+                var name = IL2CPP.il2cpp_method_get_name_(method) ?? "";
+                if (!name.Equals(methodName, StringComparison.Ordinal))
+                    continue;
+                if (!IL2CPP.il2cpp_method_is_instance(method))
+                    continue;
+                if (IL2CPP.il2cpp_method_get_param_count(method) != 0)
+                    continue;
+                found = method;
+                count++;
+            }
+
+            if (count == 1)
+                return found;
+            if (count > 1)
+                return IntPtr.Zero;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static unsafe bool InvokeBoolObject(IntPtr method, IntPtr arg)
+    {
+        var exc = IntPtr.Zero;
+        var value = arg;
+        var argv = stackalloc void*[1];
+        argv[0] = &value;
+        var ret = IL2CPP.il2cpp_runtime_invoke(method, IntPtr.Zero, argv, ref exc);
+        if (exc != IntPtr.Zero || ret == IntPtr.Zero)
+            return false;
+        return Marshal.ReadByte(IL2CPP.il2cpp_object_unbox(ret)) != 0;
+    }
+
+    static unsafe IntPtr InvokeObject(IntPtr method, IntPtr obj)
+    {
+        var exc = IntPtr.Zero;
+        void** none = default;
+        var value = IL2CPP.il2cpp_runtime_invoke(method, obj, none, ref exc);
+        if (exc != IntPtr.Zero)
+            return IntPtr.Zero;
+        return value;
     }
 
     static bool TryFindInstanceField(IntPtr klass, string fieldName, out int offset, out string why)

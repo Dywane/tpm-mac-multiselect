@@ -14,7 +14,7 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    public const string PluginVersion = "0.4.24";
+    public const string PluginVersion = "0.4.25";
 
     internal static ManualLogSource LogSrc = null!;
 

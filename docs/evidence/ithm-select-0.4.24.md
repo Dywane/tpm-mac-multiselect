@@ -1,5 +1,7 @@
 # ITHM Task5 Shift drag select (MS 0.4.24)
 
+Do not deploy this build. Live arm failed with `UnityEngine.Input.GetKeyDown count=0` after the singleton path logged `parentFields=<Instance>k__BackingField:TPS.Game.BuildLogic`. MS 0.4.25 walks every image for Left Shift. See `docs/evidence/ithm-select-0.4.25.md`.
+
 **MS:** 0.4.24
 **Host:** 0.4.0. Do not replace the Host DLL.
 **Live drag:** still for the build machine. This VM cannot run the game.

@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.24"), "version 0.4.24");
+        Expect(plugin.Contains("0.4.25"), "version 0.4.25");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -170,7 +170,10 @@ internal static class Program
         Expect(watch.Contains("_itemsSelected"), "names the drag set");
         Expect(watch.Contains("il2cpp_runtime_invoke"), "calls StartGameDragSelect through il2cpp");
         Expect(watch.Contains("il2cpp_class_from_name"), "resolves Input by name");
-        Expect(watch.Contains("get_Instance"), "resolves BuildLogic get_Instance");
+        Expect(watch.Contains("GetKeyDown"), "names legacy GetKeyDown");
+        Expect(watch.Contains("leftShiftKey"), "names the Input System shift key");
+        Expect(watch.Contains("wasPressedThisFrame"), "names the Input System edge");
+        Expect(watch.Contains("DescribeShiftTypes"), "arm miss lists Input classes");
         Expect(watch.Contains("staticFields="), "arm miss lists static fields");
         Expect(!watch.Contains("BuildLogic.<Instance>k__BackingField missing"), "does not abort on the Win backing field");
         Expect(watch.Contains("il2cpp_field_get_offset"), "reads field offsets from metadata");
