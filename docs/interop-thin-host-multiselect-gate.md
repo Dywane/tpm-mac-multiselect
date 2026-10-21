@@ -74,22 +74,22 @@
 
 ---
 
-## Task 4 — PlacementReadyHook（MS **0.4.11** methodPointer swap 冷启 **PASS**；放置摘录 **PENDING**；§4.5 **不勾**）
+## Task 4 — PlacementReadyHook（MS **0.4.11** methodPointer swap；§4.5 **PASS**；**允许开 Task5**）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 目标钉名 | PRIMARY = `CursorModePlaceItem.OnBecomeActive` methodPointer swap | `docs/evidence/ithm-placement-hook-target.md` |
+| 目标钉名 | PRIMARY = `CursorModePlaceItem.OnBecomeActive` methodPointer swap（现场已验） | `docs/evidence/ithm-placement-hook-target.md` |
 | Enter arm | **0.4.11 methodPointer swap 冷启 PASS** — `enterArmed=True`；`WAITING_FOR_STUB_METHODINFO` **已过**；prologue rewrite / `Harmony.Patch` OnBecomeActive **OFF**（HarmonySupport→Dobby 硬退） | `docs/evidence/ithm-0.4.11-methodpointer-smoke.md`（commit `8c5a6db`） |
 | Banned forever | `NativeDetour(IntPtr, Delegate)` / GetNativeStart；enter 侧 Dobby/Abs64 prologue | never fall back |
 | Poll | PlaceModeFieldPoll **Compile Remove**（user: no poll） | csproj |
-| 冷启放置摘录 | **仍 PENDING** — 需进放置 → `PLACEMENT_READY via=…(methodPointer swap)` | （待用户放置取证） |
+| 放置摘录 §4.5 | **PASS** — `PLACEMENT_READY via=CursorModePlaceItem.OnBecomeActive (methodPointer swap)`；无 enter 侧 Dobby C12 | `docs/evidence/ithm-0.4.11-placement-ready-20261021.md`（LogOutput mtime 2026-10-21 10:44:26 Asia/Shanghai） |
 | 版本 | Multiselect **0.4.11** / Host **0.4.0** | PluginVersion；plugins 仅换 MS DLL |
 | 历史 | 0.4.5 diag-only fptr → 0.4.6 formal fptr ON 曾为主路径；现已让位 methodPointer swap | `ithm-onbecomeactive-0.4.6-fptr-default-on.md` 等 |
 
-**判据：** 规格 §4.5 — **仍不勾**（等放置摘录）。冷启冒烟已过；**勿开 Task5** 直到出现 `PLACEMENT_READY via=…(methodPointer swap)`。进放置若仍硬崩 → 停并写清，**勿**重挂 Harmony.Patch / Delegate NativeDetour。
+**判据：** 规格 §4.5 — **已勾 PASS**。主路径仍为 methodPointer swap。**允许开 Task5**。进放置若后续硬崩 → 停并写清，**勿**重挂 Harmony.Patch / Delegate NativeDetour。
 
 ---
 
 ## Task 5+（demo建造）
 
-hover / pickup / rotate / delete — 见计划 T5–8；**建议等 Task4 冷启动 PLACEMENT_READY 摘录后再开 Task5。**
+hover / pickup / rotate / delete — 见计划 T5–8；Task4 §4.5 已 PASS，**可开 Task5**（本 commit 仅文档收口，不含 Task5 代码）。
