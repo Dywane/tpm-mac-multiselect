@@ -4,6 +4,7 @@ using System.Threading;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Runtime;
 using TPS.Game;
+using TpmMacMultiselect.BuildActions;
 
 namespace TpmMacMultiselect.Hooks;
 
@@ -140,8 +141,8 @@ static class HoverSampleHook
         try
         {
             orig(self, methodInfo);
-            if (PlacementReadyHook.IsPlacementReady)
-                Plugin.Bridge?.TryGetHoveredSelectable(out _);
+            if (PlacementReadyHook.IsPlacementReady && Plugin.Bridge is Il2CppItemSelectionBridge bridge)
+                bridge.TryGetHoveredSelectable(self, out _);
         }
         finally
         {

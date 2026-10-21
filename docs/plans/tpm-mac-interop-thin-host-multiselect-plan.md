@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** Step 1 的字段读在 MS **0.4.12**。0.4.12 的 `HoverWatch` 注入在冷启失败（`InjectorHelpers` 类型初始化）。MS **0.4.13** 改为 `PLACEMENT_READY` 之后对 `CursorManager.OnUpdate` 做 methodPointer swap。Step 2 活体 HIT 仍由建造本机按门禁复现。
+**状态（2026-10-21）：** MS **0.4.14** 在 `CursorManager.OnUpdate` 上读 `_mode` → `<Item>k__BackingField`。0.4.13 活体 MISS 是 `WorldCursorState` focus 为 null。Step 2 活体 HIT 仍由建造本机按 `docs/evidence/ithm-hover-0.4.14.md` 复现。
 
 **执行方：** demo建造  
 

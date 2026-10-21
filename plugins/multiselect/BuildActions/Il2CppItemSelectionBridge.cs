@@ -7,10 +7,7 @@ using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppInterop.Runtime.Runtime;
 using TPS.Game;
-using TPS.Game.UI;
 using TpmMacMultiselect.Hooks;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace TpmMacMultiselect.BuildActions;
 
@@ -20,30 +17,27 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
     readonly HashSet<string> _missLogged = new();
     IntPtr _lastHit;
 
-    static IntPtr s_worldCursorClass;
-    static IntPtr s_instanceField;
-    static IntPtr s_focusField;
-    static IntPtr s_previousFocusField;
+    static IntPtr s_cursorClass;
+    static IntPtr s_placeClass;
+    static IntPtr s_modeField;
+    static IntPtr s_itemField;
     static bool s_fieldsResolved;
 
     static readonly System.Type s_cursorManagerType = typeof(CursorManager);
     static readonly System.Type s_placeItemType = typeof(CursorModePlaceItem);
-    static readonly System.Type s_buildLogicType = typeof(BuildLogic);
-    static readonly System.Type s_worldCursorType = typeof(WorldCursorState);
-    static readonly System.Type s_il2CppObjectType = typeof(Il2CppSystem.Object);
-    static readonly System.Type s_unityObjectType = typeof(Object);
 
     public Il2CppItemSelectionBridge(ManualLogSource? log = null)
     {
         _log = log ?? Plugin.LogSrc;
         _log.LogInfo(
             $"[MS][bridge] Il2Cpp* types bound: CursorManager={s_cursorManagerType.FullName}, " +
-            $"PlaceItem={s_placeItemType.FullName}, BuildLogic={s_buildLogicType.FullName}, " +
-            $"WorldCursor={s_worldCursorType.FullName}, " +
-            $"Il2CppObject={s_il2CppObjectType.FullName}, UnityObject={s_unityObjectType.FullName}");
+            $"PlaceItem={s_placeItemType.FullName}");
     }
 
     public bool TryGetHoveredSelectable(out object item)
+        => TryGetHoveredSelectable(IntPtr.Zero, out item);
+
+    internal bool TryGetHoveredSelectable(IntPtr cursorManager, out object item)
     {
         item = null!;
         if (!PlacementReadyHook.IsPlacementReady)
@@ -51,7 +45,7 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
 
         try
         {
-            if (!TryReadHover(out var hit, out var field, out var reason))
+            if (!TryReadHover(cursorManager, out var hit, out var field, out var reason))
             {
                 NoteMiss(reason);
                 _lastHit = IntPtr.Zero;
@@ -109,65 +103,89 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
         _log.LogInfo($"[MS][hover] MISS reason={reason}");
     }
 
-    static bool TryReadHover(out IntPtr hit, out string field, out string reason)
+    static bool TryReadHover(IntPtr cursorManager, out IntPtr hit, out string field, out string reason)
     {
         hit = IntPtr.Zero;
         field = "";
+        if (cursorManager == IntPtr.Zero)
+        {
+            reason = "CursorManager null";
+            return false;
+        }
+
         if (!EnsureFields(out reason))
             return false;
 
-        var state = ReadStaticRef(s_instanceField);
-        if (state == IntPtr.Zero)
+        var mode = ReadInstanceRef(cursorManager, s_modeField);
+        if (mode == IntPtr.Zero)
         {
-            reason = "WorldCursorState._instance null";
+            reason = "CursorManager._mode null";
             return false;
         }
 
-        var focus = ReadInstanceRef(state, s_focusField);
-        if (focus != IntPtr.Zero)
+        if (!IsCursorModePlaceItem(mode))
         {
-            hit = focus;
-            field = "_elementWithFocus";
-            return true;
+            reason = "CursorManager._mode type=" + NativeTypeName(mode);
+            return false;
         }
 
-        var previous = ReadInstanceRef(state, s_previousFocusField);
-        if (previous != IntPtr.Zero)
+        var item = ReadInstanceRef(mode, s_itemField);
+        if (item == IntPtr.Zero)
         {
-            hit = previous;
-            field = "_previouslyFocusedElement";
-            return true;
+            reason = "CursorModePlaceItem.<Item>k__BackingField null";
+            return false;
         }
 
-        reason = s_focusField == IntPtr.Zero && s_previousFocusField == IntPtr.Zero
-            ? "WorldCursorState focus fields missing"
-            : "WorldCursorState focus fields null";
-        return false;
+        hit = item;
+        field = "<Item>k__BackingField";
+        return true;
     }
 
     static bool EnsureFields(out string reason)
     {
         if (!s_fieldsResolved)
         {
-            RuntimeHelpers.RunClassConstructor(typeof(WorldCursorState).TypeHandle);
-            s_worldCursorClass = Il2CppClassPointerStore<WorldCursorState>.NativeClassPtr;
-            if (s_worldCursorClass == IntPtr.Zero)
+            RuntimeHelpers.RunClassConstructor(typeof(CursorManager).TypeHandle);
+            RuntimeHelpers.RunClassConstructor(typeof(CursorModePlaceItem).TypeHandle);
+            s_cursorClass = Il2CppClassPointerStore<CursorManager>.NativeClassPtr;
+            s_placeClass = Il2CppClassPointerStore<CursorModePlaceItem>.NativeClassPtr;
+            if (s_cursorClass != IntPtr.Zero)
             {
-                reason = "WorldCursorState NativeClassPtr zero";
-                return false;
+                IL2CPP.il2cpp_runtime_class_init(s_cursorClass);
+                s_modeField = IL2CPP.il2cpp_class_get_field_from_name(s_cursorClass, "_mode");
             }
 
-            s_fieldsResolved = true;
-            IL2CPP.il2cpp_runtime_class_init(s_worldCursorClass);
-            s_instanceField = IL2CPP.il2cpp_class_get_field_from_name(s_worldCursorClass, "_instance");
-            s_focusField = IL2CPP.il2cpp_class_get_field_from_name(s_worldCursorClass, "_elementWithFocus");
-            s_previousFocusField = IL2CPP.il2cpp_class_get_field_from_name(
-                s_worldCursorClass, "_previouslyFocusedElement");
+            if (s_placeClass != IntPtr.Zero)
+            {
+                IL2CPP.il2cpp_runtime_class_init(s_placeClass);
+                s_itemField = IL2CPP.il2cpp_class_get_field_from_name(
+                    s_placeClass, "<Item>k__BackingField");
+            }
+
+            s_fieldsResolved = s_modeField != IntPtr.Zero && s_itemField != IntPtr.Zero;
         }
 
-        if (s_instanceField == IntPtr.Zero)
+        if (s_cursorClass == IntPtr.Zero)
         {
-            reason = "WorldCursorState._instance field missing";
+            reason = "CursorManager NativeClassPtr zero";
+            return false;
+        }
+
+        if (s_modeField == IntPtr.Zero)
+        {
+            reason = "CursorManager._mode field missing";
+            return false;
+        }
+
+        if (s_placeClass == IntPtr.Zero)
+        {
+            reason = "CursorModePlaceItem NativeClassPtr zero";
+            return false;
+        }
+
+        if (s_itemField == IntPtr.Zero)
+        {
+            reason = "CursorModePlaceItem.<Item>k__BackingField missing";
             return false;
         }
 
@@ -175,16 +193,20 @@ public sealed class Il2CppItemSelectionBridge : IItemSelectionBridge
         return true;
     }
 
-    static IntPtr ReadStaticRef(IntPtr field)
+    static bool IsCursorModePlaceItem(IntPtr obj)
     {
-        if (field == IntPtr.Zero)
-            return IntPtr.Zero;
-        unsafe
+        var klass = IL2CPP.il2cpp_object_get_class(obj);
+        for (var depth = 0; depth < 32 && klass != IntPtr.Zero; depth++)
         {
-            IntPtr value;
-            IL2CPP.il2cpp_field_static_get_value(field, &value);
-            return value;
+            var name = IL2CPP.il2cpp_class_get_name_(klass) ?? "";
+            if (name == "CursorModePlaceItem")
+                return true;
+            if (name is "Object" or "Il2CppObject")
+                break;
+            klass = IL2CPP.il2cpp_class_get_parent(klass);
         }
+
+        return false;
     }
 
     static IntPtr ReadInstanceRef(IntPtr obj, IntPtr field)
