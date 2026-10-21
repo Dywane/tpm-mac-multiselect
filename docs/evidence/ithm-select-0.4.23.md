@@ -1,5 +1,7 @@
 # ITHM Task5 Shift drag select (MS 0.4.23)
 
+Do not deploy this build. Live arm failed with `BuildLogic.<Instance>k__BackingField missing`, so Left Shift did nothing. MS 0.4.24 resolves the singleton without that name. See `docs/evidence/ithm-select-0.4.24.md`.
+
 **MS:** 0.4.23
 **Host:** 0.4.0. Do not replace the Host DLL.
 **Live drag:** still for the build machine. This VM cannot run the game.

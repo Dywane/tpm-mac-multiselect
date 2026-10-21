@@ -90,20 +90,20 @@
 
 ---
 
-## Task 5 — Shift 框选（MS **0.4.23**；通过线是 `HIT count=`）
+## Task 5 — Shift 框选（MS **0.4.24**；通过线是 `HIT count=`）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 读法 | 悬停 HIT 作废。Left Shift 边沿且当前模式为 `CursorModeSelect` 时，`il2cpp_runtime_invoke` 调用 `BuildLogic.StartGameDragSelect`，参数 0。拖拽结束读 `CursorModeGameDragSelect._itemsSelected` 的数量。非 0 打 `[MS][select] HIT count=N`。不调用 `PlaceItem` 或 `SelectEntity`。 | `docs/evidence/ithm-select-0.4.23.md` |
+| 读法 | 悬停 HIT 作废。Left Shift 边沿且当前模式为 `CursorModeSelect` 时，`il2cpp_runtime_invoke` 调用 `BuildLogic.StartGameDragSelect`，参数 0。`BuildLogic` 单例先用静态 `get_Instance`，没有再找静态引用字段。0.4.23 写死 `<Instance>k__BackingField` 导致未 arm。拖拽结束读 `_itemsSelected` 的数量。非 0 打 `[MS][select] HIT count=N`。不调用 `PlaceItem` 或 `SelectEntity`。 | `docs/evidence/ithm-select-0.4.24.md` |
 | 禁止 | poll 不作放置就绪主路径。不恢复 hover。不用 `ClassInjector`。不改写 prologue，不写 `0xC3`，不移植 SeanB 的 `VirtualProtect`。冷启不 swap `CursorManager.OnUpdate`。 | 源码 |
 | 取样 | 冷启只保留 `CursorModePlaceItem.OnBecomeActive`。`PLACEMENT_READY` 之后 `DragSelectWatch.Arm`。 | `Hooks/DragSelectWatch.cs` |
 | 冷启 | `Chainloader startup complete` 之后应进入主菜单。无 `watch armed`。 | 0.4.21 黑屏见 `docs/evidence/ithm-hover-0.4.22.md` |
-| 版本 | Multiselect **0.4.23** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 版本 | Multiselect **0.4.24** / Host **0.4.0** | `Plugin.PluginVersion` |
 | 活体 | 有 `hover hooks removed`、`watch armed`、`enter StartGameDragSelect`、`HIT count=`。没有 `[MS][hover] HIT`。 | 待 `docs/evidence/ithm-hover-x64.log` |
 
 ### 建造本机复现
 
-先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.22 的 DLL。步骤细节在 `docs/evidence/ithm-select-0.4.23.md`。
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.23 的 DLL。步骤细节在 `docs/evidence/ithm-select-0.4.24.md`。
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"
@@ -112,12 +112,13 @@ dotnet build plugins/multiselect/TpmMacMultiselect.csproj -c Release
 
 把 `plugins/multiselect/bin/Release/TpmMacMultiselect.dll` 拷到游戏 `BepInEx/plugins/`。从游戏根目录运行 `./run_bepinex.sh`。
 
-1. 冷启后确认 `Loading [TPM Mac Multi-Select 0.4.23]`、`hover hooks removed`、`Chainloader startup complete` 和主菜单。
-2. 进入关卡，进入一次物品放置。确认 `PLACEMENT_READY` 和 `watch armed`。
-3. 退出放置，回到普通光标。
-4. 按住 Left Shift，框选物件，松开。
-5. 确认 `enter StartGameDragSelect` 和 `HIT count=`。
-6. 把这些行摘到 `docs/evidence/ithm-hover-x64.log`。
+1. 冷启后确认 `Loading [TPM Mac Multi-Select 0.4.24]`、`hover hooks removed`、`Chainloader startup complete` 和主菜单。
+2. 进入关卡，进入一次物品放置。确认 `PLACEMENT_READY` 和 `watch armed`，且 `instance=` 不是缺失的 backing field。
+3. 若仍是 `NOT armed`，保存带 `staticFields=` 的那一行。
+4. 退出放置，回到普通光标。
+5. 按住 Left Shift，框选物件，松开。
+6. 确认 `enter StartGameDragSelect` 和 `HIT count=`。
+7. 把这些行摘到 `docs/evidence/ithm-hover-x64.log`。
 
 `HIT count=` 不是悬停。它是框选集合的数量。下一步才是 `PlaceItem`。
 

@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** Task5 改为 SeanB 框选。MS **0.4.23** 在 `PLACEMENT_READY` 之后对 Left Shift 调用 `StartGameDragSelect`，拖拽结束打 `[MS][select] HIT count=N`。不调用 `PlaceItem`。悬停 HIT 不再作为通过条件。细节在 `docs/evidence/ithm-select-0.4.23.md`。
+**状态（2026-10-21）：** Task5 是 SeanB 框选。MS **0.4.24** 不再写死 `BuildLogic.<Instance>k__BackingField`。单例用 `get_Instance` 或静态引用字段。通过线仍是 `[MS][select] HIT count=N`。细节在 `docs/evidence/ithm-select-0.4.24.md`。
 
 **执行方：** demo建造  
 

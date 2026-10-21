@@ -37,7 +37,10 @@ static class DragSelectWatch
 
     static IntPtr _startMethod;
     static IntPtr _keyMethod;
-    static IntPtr _instanceField;
+    static IntPtr _instanceMember;
+    static bool _instanceIsMethod;
+    static bool _startIsStatic;
+    static string _instanceHow = "";
     static IntPtr _buildClass;
     static int _modeOffset;
     static int _draggingOffset;
@@ -67,15 +70,16 @@ static class DragSelectWatch
                 return;
             }
 
-            if (!TryFindStaticObjectField(build, "<Instance>k__BackingField", out _instanceField))
-            {
-                GiveUp("BuildLogic.<Instance>k__BackingField missing");
-                return;
-            }
-
             if (!TryFindStart(build, out _startMethod, out var paramName))
             {
                 GiveUp("StartGameDragSelect " + paramName);
+                return;
+            }
+
+            _instanceHow = "static-method";
+            if (!_startIsStatic && !TryResolveInstance(build, out _instanceHow))
+            {
+                GiveUp("BuildLogic singleton missing");
                 return;
             }
 
@@ -166,6 +170,7 @@ static class DragSelectWatch
                 Plugin.LogSrc.LogInfo(
                     "[MS][select] watch armed via=CursorManager.OnUpdate after PLACEMENT_READY" +
                     " param=" + paramName +
+                    " instance=" + _instanceHow +
                     " _mode=" + _modeOffset +
                     " _isDragging=" + _draggingOffset +
                     " _itemsSelected=" + _itemsOffset +
@@ -196,7 +201,18 @@ static class DragSelectWatch
     static void GiveUp(string reason)
     {
         _gaveUp = true;
-        Plugin.LogSrc.LogError("[MS][select] NOT armed: " + reason + ". No byte patch. No poll.");
+        var inventory = "";
+        try
+        {
+            if (_buildClass != IntPtr.Zero)
+                inventory = " " + Inventory(_buildClass);
+        }
+        catch (Exception ex)
+        {
+            inventory = " inventory-threw " + ExceptionText.Format(ex);
+        }
+
+        Plugin.LogSrc.LogError("[MS][select] NOT armed: " + reason + inventory + ". No byte patch. No poll.");
     }
 
     static void Thunk(IntPtr self, IntPtr methodInfo)
@@ -312,11 +328,15 @@ static class DragSelectWatch
             _buildInited = true;
         }
 
-        var build = ReadStaticObject(_instanceField);
-        if (build == IntPtr.Zero)
+        var build = IntPtr.Zero;
+        if (!_startIsStatic)
         {
-            Plugin.LogSrc.LogError("[MS][select] StartGameDragSelect skipped: BuildLogic instance null");
-            return;
+            build = ReadBuildInstance();
+            if (build == IntPtr.Zero)
+            {
+                Plugin.LogSrc.LogError("[MS][select] StartGameDragSelect skipped: BuildLogic instance null");
+                return;
+            }
         }
 
         if (!_enterLogged)
@@ -436,7 +456,10 @@ static class DragSelectWatch
     {
         method = IntPtr.Zero;
         why = "";
-        var found = 0;
+        var instanceFound = 0;
+        var staticFound = 0;
+        var instanceMethod = IntPtr.Zero;
+        var staticMethod = IntPtr.Zero;
         var iter = IntPtr.Zero;
         while (true)
         {
@@ -448,8 +471,6 @@ static class DragSelectWatch
             var name = IL2CPP.il2cpp_method_get_name_(current) ?? "";
             if (!name.Equals("StartGameDragSelect", StringComparison.Ordinal))
                 continue;
-            if (!IL2CPP.il2cpp_method_is_instance(current))
-                continue;
             if (IL2CPP.il2cpp_method_get_param_count(current) != 1)
                 continue;
 
@@ -458,24 +479,271 @@ static class DragSelectWatch
             var fieldClass = type == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_class_from_type(type);
             if (fieldClass == IntPtr.Zero || !IL2CPP.il2cpp_class_is_valuetype(fieldClass))
             {
-                found = 0;
                 method = IntPtr.Zero;
                 why = "param not a valuetype (" + why + ")";
                 return false;
             }
 
-            method = current;
-            found++;
+            if (IL2CPP.il2cpp_method_is_instance(current))
+            {
+                instanceMethod = current;
+                instanceFound++;
+            }
+            else
+            {
+                staticMethod = current;
+                staticFound++;
+            }
         }
 
-        if (found != 1 || method == IntPtr.Zero)
+        if (instanceFound == 1 && staticFound == 0)
         {
-            why = "count=" + found;
-            method = IntPtr.Zero;
-            return false;
+            method = instanceMethod;
+            _startIsStatic = false;
+            return true;
         }
 
+        if (staticFound == 1 && instanceFound == 0)
+        {
+            method = staticMethod;
+            _startIsStatic = true;
+            return true;
+        }
+
+        why = "instance=" + instanceFound + " static=" + staticFound;
+        method = IntPtr.Zero;
+        return false;
+    }
+
+    static bool TryResolveInstance(IntPtr klass, out string how)
+    {
+        how = "";
+        var getter = FindStaticZeroArg(klass, "get_Instance");
+        if (getter == IntPtr.Zero)
+            getter = FindStaticZeroArg(klass, "Instance");
+        if (getter != IntPtr.Zero)
+        {
+            _instanceIsMethod = true;
+            _instanceMember = getter;
+            how = IL2CPP.il2cpp_method_get_name_(getter) ?? "get_Instance";
+            return true;
+        }
+
+        if (TryPickStaticField(klass, out var field, out how))
+        {
+            _instanceIsMethod = false;
+            _instanceMember = field;
+            return true;
+        }
+
+        return false;
+    }
+
+    static IntPtr FindStaticZeroArg(IntPtr klass, string methodName)
+    {
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var found = IntPtr.Zero;
+            var count = 0;
+            var iter = IntPtr.Zero;
+            while (true)
+            {
+                var method = IL2CPP.il2cpp_class_get_methods(current, ref iter);
+                if (method == IntPtr.Zero)
+                    break;
+                if (IL2CPP.il2cpp_method_get_declaring_type(method) != current)
+                    continue;
+                var name = IL2CPP.il2cpp_method_get_name_(method) ?? "";
+                if (!name.Equals(methodName, StringComparison.Ordinal))
+                    continue;
+                if (IL2CPP.il2cpp_method_is_instance(method))
+                    continue;
+                if (IL2CPP.il2cpp_method_get_param_count(method) != 0)
+                    continue;
+                found = method;
+                count++;
+            }
+
+            if (count == 1)
+                return found;
+            if (count > 1)
+                return IntPtr.Zero;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static bool TryPickStaticField(IntPtr klass, out IntPtr field, out string how)
+    {
+        field = IntPtr.Zero;
+        how = "";
+        var names = new[] { "<Instance>k__BackingField", "Instance", "_instance" };
+        foreach (var preferred in names)
+        {
+            if (TryFindNamedStaticRef(klass, preferred, out field))
+            {
+                how = "field:" + preferred;
+                return true;
+            }
+        }
+
+        var found = 0;
+        var chosen = IntPtr.Zero;
+        var chosenName = "";
+        CollectSingletonFields(klass, ref found, ref chosen, ref chosenName);
+        var parent = IL2CPP.il2cpp_class_get_parent(klass);
+        if (parent != IntPtr.Zero)
+            CollectSingletonFields(parent, ref found, ref chosen, ref chosenName);
+        if (found != 1 || chosen == IntPtr.Zero)
+            return false;
+        field = chosen;
+        how = "field:" + chosenName;
         return true;
+    }
+
+    static bool TryFindNamedStaticRef(IntPtr klass, string fieldName, out IntPtr field)
+    {
+        field = IntPtr.Zero;
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 2; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var iter = IntPtr.Zero;
+            while (true)
+            {
+                var currentField = IL2CPP.il2cpp_class_get_fields(current, ref iter);
+                if (currentField == IntPtr.Zero)
+                    break;
+                var name = IL2CPP.il2cpp_field_get_name_(currentField) ?? "";
+                if (!name.Equals(fieldName, StringComparison.Ordinal))
+                    continue;
+                if (!IsStaticReference(currentField))
+                    continue;
+                field = currentField;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static void CollectSingletonFields(IntPtr klass, ref int found, ref IntPtr chosen, ref string chosenName)
+    {
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
+            if (field == IntPtr.Zero)
+                break;
+            if (!IsStaticReference(field))
+                continue;
+            var name = IL2CPP.il2cpp_field_get_name_(field) ?? "";
+            var typeName = FieldTypeName(field);
+            if (name.IndexOf("Instance", StringComparison.Ordinal) < 0 &&
+                typeName.IndexOf("BuildLogic", StringComparison.Ordinal) < 0)
+                continue;
+            found++;
+            chosen = field;
+            chosenName = name;
+        }
+    }
+
+    static bool IsStaticReference(IntPtr field)
+    {
+        if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) == 0)
+            return false;
+        var type = IL2CPP.il2cpp_field_get_type(field);
+        if (type == IntPtr.Zero)
+            return false;
+        var klass = IL2CPP.il2cpp_class_from_type(type);
+        return klass != IntPtr.Zero && !IL2CPP.il2cpp_class_is_valuetype(klass);
+    }
+
+    static string FieldTypeName(IntPtr field)
+    {
+        var type = IL2CPP.il2cpp_field_get_type(field);
+        return type == IntPtr.Zero ? "" : IL2CPP.il2cpp_type_get_name_(type) ?? "";
+    }
+
+    static string Inventory(IntPtr klass)
+    {
+        var parent = IL2CPP.il2cpp_class_get_parent(klass);
+        return "staticFields=" + StaticFieldList(klass) +
+               " parentFields=" + StaticFieldList(parent) +
+               " staticMethods=" + StaticMethodList(klass);
+    }
+
+    static string StaticFieldList(IntPtr klass)
+    {
+        if (klass == IntPtr.Zero)
+            return "none";
+        var text = "";
+        var count = 0;
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var field = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
+            if (field == IntPtr.Zero)
+                break;
+            if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) == 0)
+                continue;
+            if (count > 0)
+                text += ",";
+            text += (IL2CPP.il2cpp_field_get_name_(field) ?? "?") + ":" + FieldTypeName(field);
+            count++;
+        }
+
+        return count == 0 ? "none" : text;
+    }
+
+    static string StaticMethodList(IntPtr klass)
+    {
+        if (klass == IntPtr.Zero)
+            return "none";
+        var text = "";
+        var count = 0;
+        var iter = IntPtr.Zero;
+        while (true)
+        {
+            var method = IL2CPP.il2cpp_class_get_methods(klass, ref iter);
+            if (method == IntPtr.Zero)
+                break;
+            if (IL2CPP.il2cpp_method_get_declaring_type(method) != klass)
+                continue;
+            if (IL2CPP.il2cpp_method_is_instance(method))
+                continue;
+            if (count > 0)
+                text += ",";
+            text += (IL2CPP.il2cpp_method_get_name_(method) ?? "?") + "/" + IL2CPP.il2cpp_method_get_param_count(method);
+            count++;
+        }
+
+        return count == 0 ? "none" : text;
+    }
+
+    static unsafe IntPtr ReadBuildInstance()
+    {
+        if (!_buildInited && _buildClass != IntPtr.Zero)
+        {
+            IL2CPP.il2cpp_runtime_class_init(_buildClass);
+            _buildInited = true;
+        }
+
+        if (_instanceIsMethod)
+        {
+            var exc = IntPtr.Zero;
+            void** none = default;
+            var value = IL2CPP.il2cpp_runtime_invoke(_instanceMember, IntPtr.Zero, none, ref exc);
+            if (exc != IntPtr.Zero)
+            {
+                Plugin.LogSrc.LogError("[MS][select] get_Instance exception " + ClassName(exc));
+                return IntPtr.Zero;
+            }
+
+            return value;
+        }
+
+        return ReadStaticObject(_instanceMember);
     }
 
     static bool TryFindKeyDown(out IntPtr method, out string why)
@@ -561,28 +829,6 @@ static class DragSelectWatch
         }
 
         return true;
-    }
-
-    static bool TryFindStaticObjectField(IntPtr klass, string fieldName, out IntPtr field)
-    {
-        field = IntPtr.Zero;
-        var found = 0;
-        var iter = IntPtr.Zero;
-        while (true)
-        {
-            var current = IL2CPP.il2cpp_class_get_fields(klass, ref iter);
-            if (current == IntPtr.Zero)
-                break;
-            var name = IL2CPP.il2cpp_field_get_name_(current) ?? "";
-            if (!name.Equals(fieldName, StringComparison.Ordinal))
-                continue;
-            if ((IL2CPP.il2cpp_field_get_flags(current) & FieldStatic) == 0)
-                continue;
-            field = current;
-            found++;
-        }
-
-        return found == 1 && field != IntPtr.Zero;
     }
 
     static bool TryFindDeclaredZeroArg(IntPtr klass, string methodName, out IntPtr method, out IntPtr fn)
