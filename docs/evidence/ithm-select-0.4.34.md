@@ -1,3 +1,5 @@
+Do not deploy this build. Shift release died after `allow skip` and before SelectEntity. The IPS was SIGSEGV at `0x18`, the same family as the 0.4.30 allow crash. `PlaceItem sean` was `static=1 argc=3 params=ManagedEntity,Boolean,Boolean`, and the binder left `place=missing`. MS 0.4.35 skips ClearAll and calls that PlaceItem with the BuildLogic instance. See `docs/evidence/ithm-select-0.4.35.md`.
+
 # ITHM Task5 bind instance PlaceItem and block a dirty re-arm (MS 0.4.34)
 
 **MS:** 0.4.34

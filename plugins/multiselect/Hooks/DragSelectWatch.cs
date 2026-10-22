@@ -109,6 +109,7 @@ static class DragSelectWatch
     static IntPtr _clearMethod;
     static IntPtr _allowMethod;
     static bool _allowSkipLogged;
+    static bool _clearSkipLogged;
     static IntPtr _selectMethod;
     static bool _selectBoolFirst;
     static bool _groupBound;
@@ -2562,17 +2563,10 @@ static class DragSelectWatch
 
     static void InvokeClear(IntPtr mgr)
     {
-        if (_clearMethod == IntPtr.Zero)
+        if (_clearSkipLogged)
             return;
-        var exc = IntPtr.Zero;
-        unsafe
-        {
-            void** none = default;
-            IL2CPP.il2cpp_runtime_invoke(_clearMethod, mgr, none, ref exc);
-        }
-
-        if (exc != IntPtr.Zero)
-            Plugin.LogSrc.LogError("[MS][select] ClearAllSelectedEntities exception " + ClassName(exc));
+        _clearSkipLogged = true;
+        Plugin.LogSrc.LogInfo("[MS][select] ClearAll skip reason=native-crash-0.4.34");
     }
 
     static unsafe bool InvokeSelect(IntPtr mgr, IntPtr entity)
@@ -2754,11 +2748,10 @@ static class DragSelectWatch
 
         var sean = FindSeanPlace(build);
         Plugin.LogSrc.LogInfo("[MS][select] PlaceItem sean " + MethodSig(sean));
-        if (sean != IntPtr.Zero &&
-            IL2CPP.il2cpp_method_is_instance(sean) &&
-            IL2CPP.il2cpp_method_get_param_count(sean) == 3 &&
-            ScorePlace(sean, out var seanSlot, out _))
+        if (sean != IntPtr.Zero && IL2CPP.il2cpp_method_get_param_count(sean) == 3)
         {
+            if (!ScorePlace(sean, out var seanSlot, out _))
+                seanSlot = 0;
             best = sean;
             bestSlot = seanSlot;
         }
@@ -2771,7 +2764,7 @@ static class DragSelectWatch
 
         _placeMethod = best;
         _placeObjectSlot = bestSlot;
-        _placeStatic = false;
+        _placeStatic = !IL2CPP.il2cpp_method_is_instance(best);
         Plugin.LogSrc.LogInfo("[MS][select] PlaceItem method " + MethodSig(best));
     }
 
