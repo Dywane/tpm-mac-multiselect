@@ -14,3 +14,5 @@ plugins/**/bin/
 plugins/**/obj/
 # Optional local symlink to tpm-mac-loader host (csproj uses cross-repo path)
 plugins/mac-il2cpp-host
+native/build/
+native/lib/
