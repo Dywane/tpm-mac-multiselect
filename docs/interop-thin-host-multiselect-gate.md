@@ -90,20 +90,20 @@
 
 ---
 
-## Task 5 — Shift 框选（MS **0.4.36**；通过线是 `PlaceItem` 后的 `mode=CursorModePlaceItem`）
+## Task 5 — Shift 框选（MS **0.4.37**；通过线是 `PlaceItem` 后的 `mode=CursorModePlaceItem`）
 
 | 项 | 期望 | evidence |
 |----|------|----------|
-| 读法 | Shift 边沿先打 `arm decide mode=<name> allow=0\|1`。`CursorModePlaceItem`、`CursorModeGameDragSelect` 和其它非 select 类名 `allow=0`，并打 `arm refuse mode=<name> reason=select-only`，不调用 `StartGameDragSelect`，不装 suppress，不调用 `ResetDragCursorIcon`。`CursorModeSelect`（或类指针等于 select 类）才 `allow=1`。允许的 arm 也不调用 `ResetDragCursorIcon`，日志 `ResetDrag skip reason=native-crash-0.4.35`。不调用 `ClearAllSelectedEntities`。Sean 的 `PlaceItem` argc-3 用 BuildLogic 实例。不再调用 `IsGroupSelectionAllowedForEntity`。不写字节 `RET`。 | `docs/evidence/ithm-select-0.4.36.md` |
+| 读法 | Shift 边沿先打 `arm decide mode=<name> allow=0\|1`。非 select 模式 `allow=0` 并拒绝 arm。Select arm 不调用 `ResetDragCursorIcon`。Finish 在 `allow skip` 之后调用 `ClearAllSelectedEntities`（`ClearAll enter` / `ClearAll exit`），然后对每个实体打 `SelectEntity before i=`，汇总是 `SelectEntity enter count=`。不再跑 `TakeGameItems`。Sean 的 `PlaceItem` argc-3 用 BuildLogic 实例。不再调用 `IsGroupSelectionAllowedForEntity`。不写字节 `RET`。 | `docs/evidence/ithm-select-0.4.37.md` |
 | 禁止 | poll 不作放置就绪主路径。不恢复 hover。不用 `ClassInjector`。不改写 prologue，不写 `0xC3`，不移植 SeanB 的 `VirtualProtect`。冷启不 swap `CursorManager.OnUpdate`。 | 源码 |
 | 取样 | 冷启只保留 `CursorModePlaceItem.OnBecomeActive`。`PLACEMENT_READY` 之后 `DragSelectWatch.Arm`。 | `Hooks/DragSelectWatch.cs` |
 | 冷启 | `Chainloader startup complete` 之后应进入主菜单。无 `watch armed`。 | 0.4.21 黑屏见 `docs/evidence/ithm-hover-0.4.22.md` |
-| 版本 | Multiselect **0.4.36** / Host **0.4.0** | `Plugin.PluginVersion` |
+| 版本 | Multiselect **0.4.37** / Host **0.4.0** | `Plugin.PluginVersion` |
 | 活体 | 有 `hover hooks removed`、`watch armed`、`enter StartGameDragSelect`、`HIT count=`。没有 `[MS][hover] HIT`。 | 待 `docs/evidence/ithm-hover-x64.log` |
 
 ### 建造本机复现
 
-先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.35 的 DLL。步骤细节在 `docs/evidence/ithm-select-0.4.36.md`。
+先编译并换上 Multiselect DLL。Host 保持 **0.4.0**。不要设置 `TPM_MS_DIAG_*`。不要沿用 0.4.36 的 DLL。步骤细节在 `docs/evidence/ithm-select-0.4.37.md`。
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"
@@ -112,12 +112,12 @@ dotnet build plugins/multiselect/TpmMacMultiselect.csproj -c Release
 
 把 `plugins/multiselect/bin/Release/TpmMacMultiselect.dll` 拷到游戏 `BepInEx/plugins/`。从游戏根目录运行 `./run_bepinex.sh`。
 
-1. 冷启后确认 `Loading [TPM Mac Multi-Select 0.4.36]`、`hover hooks removed`、`Chainloader startup complete` 和主菜单。
+1. 冷启后确认 `Loading [TPM Mac Multi-Select 0.4.37]`、`hover hooks removed`、`Chainloader startup complete` 和主菜单。
 2. 进入关卡，进入一次物品放置。确认 `PLACEMENT_READY`、`watch armed` 和随后的 `[MS][select] probe`。
 3. 若没有 `probe`，OnUpdate 没有跑。保存 armed 行即可。
 4. 仍在 `CursorModePlaceItem` 时按一次 Left Shift。确认 `arm decide mode=CursorModePlaceItem allow=0` 和 `arm refuse mode=CursorModePlaceItem reason=select-only`。这次没有 `enter StartGameDragSelect`，也没有 `ResetDragCursorIcon`。
 5. 退出放置，回到 `CursorModeSelect`。按住 Left Shift，框选物件，松开。
-6. 确认 `arm decide mode=CursorModeSelect allow=1`、`ResetDrag skip reason=native-crash-0.4.35`、没有 `ResetDragCursorIcon argc=`、`ClearAll skip reason=native-crash-0.4.34`、`SelectEntity enter`、`PlaceItem method declaring=`、`PlaceItem this=` 不是 null、`leader class=GameItemInstance`、`PlaceItem leader=` 和 `mode=CursorModePlaceItem`。没有 `allow i=`。没有拆除确认框。
+6. 确认 `arm decide mode=CursorModeSelect allow=1`、`ResetDrag skip reason=native-crash-0.4.35`、`ClearAll enter`、`ClearAll exit`、`SelectEntity before i=0`、`SelectEntity enter count=`。进程应活过这一段。随后是 `PlaceItem this=`、`PlaceItem leader=` 和 `mode=CursorModePlaceItem`。没有 `ClearAll skip`。没有 `allow i=`。没有拆除确认框。
 7. 把这些行摘到 `docs/evidence/ithm-hover-x64.log`。
 
 `HIT count=` 不是悬停。它是框选集合的数量。下一步才是 `PlaceItem`。

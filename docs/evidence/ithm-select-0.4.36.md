@@ -1,3 +1,5 @@
+Do not deploy this build. Select-mode Shift armed and skipped ResetDrag, then Finish died after `ClearAll skip reason=native-crash-0.4.34` with SIGSEGV at `0x18`. There was no `SelectEntity enter count=`. MS 0.4.37 calls ClearAll again, the way 0.4.33 did, and logs each SelectEntity before the invoke. See `docs/evidence/ithm-select-0.4.37.md`.
+
 # ITHM Task5 harden the select arm and skip ResetDrag (MS 0.4.36)
 
 **MS:** 0.4.36

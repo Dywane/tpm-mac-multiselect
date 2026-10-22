@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.36"), "version 0.4.36");
+        Expect(plugin.Contains("0.4.37"), "version 0.4.37");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -210,8 +210,11 @@ internal static class Program
         Expect(watch.Contains("suppress hit"), "logs the prompt skip");
         Expect(watch.Contains("[MS][select] suppress entered "), "logs suppress entered");
         Expect(watch.Contains("[MS][select] allow skip reason=native-crash-0.4.30"), "skips the crashing allow invoke");
-        Expect(watch.Contains("[MS][select] ClearAll skip reason=native-crash-0.4.34"), "skips ClearAll");
-        Expect(!watch.Contains("il2cpp_runtime_invoke(_clearMethod"), "does not invoke ClearAll");
+        Expect(watch.Contains("[MS][select] ClearAll enter"), "logs ClearAll before the invoke");
+        Expect(watch.Contains("[MS][select] ClearAll exit"), "logs ClearAll after the invoke");
+        Expect(watch.Contains("il2cpp_runtime_invoke(_clearMethod"), "calls ClearAll before SelectEntity");
+        Expect(watch.Contains("[MS][select] SelectEntity before i="), "logs before each SelectEntity");
+        Expect(!watch.Contains("TakeGameItems"), "does not filter the snapshot again before SelectEntity");
         Expect(!watch.Contains("il2cpp_runtime_invoke(_allowMethod"), "does not invoke the per-entity allow check");
         Expect(watch.Contains("ProcessSelected"), "stubs ProcessSelected overloads");
         Expect(!watch.Contains("argc != 0"), "prompt stubs include methods with arguments");
