@@ -20,7 +20,7 @@ static class DragSelectWatch
     const int IntKind = 8;
     const int EnumKind = 0x55;
     const int SzArrayKind = 29;
-    const int MaxGateSlots = 8;
+    const int MaxGateSlots = 32;
     const int ProbeCandidates0 = 303;
     const int ProbeCandidates1 = 304;
     const int ProbeCandidates2 = 305;
@@ -155,6 +155,9 @@ static class DragSelectWatch
     static IntPtr _gateMethod;
     static IntPtr _gateOriginal;
     static IntPtr _gateHook;
+    static IntPtr _allowOriginal;
+    static bool _allowVirtual;
+    static bool _allowHooked;
     static SuppressReturn? _gateThunk;
     static bool _gateVirtual;
     static bool _gateInstalled;
@@ -2118,6 +2121,7 @@ static class DragSelectWatch
 
         if (filtered > 0)
             InstallGate();
+        HookAllow();
         if (!_allowSkipLogged)
         {
             _allowSkipLogged = true;
@@ -2137,7 +2141,11 @@ static class DragSelectWatch
                 continue;
             }
 
-            Plugin.LogSrc.LogInfo("[MS][select] SelectEntity before i=" + i);
+            Plugin.LogSrc.LogInfo(
+                "[MS][select] SelectEntity before i=" + i +
+                " class=" + ClassName(chosen[i]) +
+                " entity=" + chosen[i].ToInt64().ToString("X") +
+                " mgr=" + mgr.ToInt64().ToString("X"));
             if (!InvokeSelect(mgr, chosen[i]))
             {
                 failed++;
@@ -3166,6 +3174,51 @@ static class DragSelectWatch
         Plugin.LogSrc.LogInfo("[MS][select] gate override on");
     }
 
+    static void HookAllow()
+    {
+        if (_allowHooked)
+            return;
+        if (_gateThunk == null)
+            _gateThunk = GateTrue;
+        if (_gateHook == IntPtr.Zero)
+            _gateHook = Marshal.GetFunctionPointerForDelegate(_gateThunk);
+        if (_allowMethod == IntPtr.Zero || _gateHook == IntPtr.Zero ||
+            !MethodPointerRedirect.TryRead(_allowMethod, out var original) || original == IntPtr.Zero)
+        {
+            Plugin.LogSrc.LogInfo("[MS][select] allow override miss");
+            return;
+        }
+
+        unsafe
+        {
+            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_allowMethod);
+            var virtualHit = false;
+            if (info.VirtualMethodPointer == original)
+            {
+                info.VirtualMethodPointer = _gateHook;
+                virtualHit = true;
+            }
+
+            info.MethodPointer = _gateHook;
+            if (info.MethodPointer != _gateHook)
+            {
+                info.MethodPointer = original;
+                if (virtualHit)
+                    info.VirtualMethodPointer = original;
+                Plugin.LogSrc.LogInfo("[MS][select] allow override miss");
+                return;
+            }
+
+            _allowOriginal = original;
+            _allowVirtual = virtualHit;
+            if (info.Class != null)
+                RedirectGateSlots(info.Class, original);
+        }
+
+        _allowHooked = true;
+        Plugin.LogSrc.LogInfo("[MS][select] allow override on");
+    }
+
     static unsafe void RedirectGateSlots(Il2CppClass* start, IntPtr original)
     {
         var depth = 0;
@@ -3197,14 +3250,26 @@ static class DragSelectWatch
 
     static void RestoreGate()
     {
-        if (!_gateInstalled)
+        if (!_gateInstalled && !_allowHooked)
             return;
         unsafe
         {
-            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_gateMethod);
-            info.MethodPointer = _gateOriginal;
-            if (_gateVirtual)
-                info.VirtualMethodPointer = _gateOriginal;
+            if (_gateInstalled && _gateMethod != IntPtr.Zero)
+            {
+                var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_gateMethod);
+                info.MethodPointer = _gateOriginal;
+                if (_gateVirtual)
+                    info.VirtualMethodPointer = _gateOriginal;
+            }
+
+            if (_allowHooked && _allowMethod != IntPtr.Zero)
+            {
+                var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_allowMethod);
+                info.MethodPointer = _allowOriginal;
+                if (_allowVirtual)
+                    info.VirtualMethodPointer = _allowOriginal;
+            }
+
             for (var s = 0; s < _gateSlotCount; s++)
             {
                 var entry = _gateSlotVtable[s] + _gateSlotIndex[s] * MethodPointerRedirect.VirtualInvokeStride;
@@ -3214,6 +3279,7 @@ static class DragSelectWatch
         }
 
         _gateInstalled = false;
+        _allowHooked = false;
         _gateSlotCount = 0;
         Plugin.LogSrc.LogInfo("[MS][select] gate override off");
     }

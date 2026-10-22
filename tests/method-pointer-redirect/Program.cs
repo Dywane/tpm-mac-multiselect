@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.38"), "version 0.4.38");
+        Expect(plugin.Contains("0.4.39"), "version 0.4.39");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -210,6 +210,7 @@ internal static class Program
         Expect(watch.Contains("suppress hit"), "logs the prompt skip");
         Expect(watch.Contains("[MS][select] suppress entered "), "logs suppress entered");
         Expect(watch.Contains("[MS][select] allow skip reason=native-crash-0.4.30"), "skips the crashing allow invoke");
+        Expect(watch.Contains("[MS][select] allow override on"), "returns true from the allow method SelectEntity calls");
         Expect(watch.Contains("[MS][select] ClearAll enter"), "logs ClearAll before the invoke");
         Expect(watch.Contains("[MS][select] ClearAll exit"), "logs ClearAll after the invoke");
         Expect(watch.Contains("il2cpp_runtime_invoke(_clearMethod"), "calls ClearAll before SelectEntity");

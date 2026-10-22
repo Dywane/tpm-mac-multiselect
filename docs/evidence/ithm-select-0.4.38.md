@@ -1,3 +1,5 @@
+Do not deploy this build. ResetDrag and ClearAll both returned. The next line was `SelectEntity before i=0`, then SIGSEGV at `0x18`. The crashing instruction is `GameAssembly+0x17fe449`, the same site as the 0.4.30 `IsGroupSelectionAllowedForEntity` invoke. MS 0.4.39 points that method at the return-1 thunk before SelectEntity. See `docs/evidence/ithm-select-0.4.39.md`.
+
 # ITHM Task5 call ResetDrag on the select arm (MS 0.4.38)
 
 **MS:** 0.4.38
