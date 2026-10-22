@@ -1,0 +1,459 @@
+[Message: Preloader] BepInEx 6.0.0-be.755 - Two Point Museum (10/22/2026 3:55:51PM)
+[Message: Preloader] Built from commit 3fab71a1914132a1ce3a545caf3192da603f2258
+[Info   :   BepInEx] System platform: macOS Unknown (kernel 26.6.2) 64-bit
+[Info   :   BepInEx] Process bitness: 64-bit (x64)
+[Info   :   BepInEx] Running under Unity 6000.0.63f1
+[Info   :   BepInEx] Runtime version: 6.0.7
+[Info   :   BepInEx] Runtime information: .NET 6.0.7
+[Debug  :   BepInEx] Game executable path: /Users/weidu/tpm_bep/tpm.app/Contents/MacOS/Two Point Museum
+[Debug  :   BepInEx] Interop assembly directory: /Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+[Debug  :   BepInEx] BepInEx root path: /Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx
+[Warning:InteropManager] Interop assemblies are possibly out of date. To disable this message, create file /Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop/assembly-hash.txt with the following contents: c0e47c49e35665e78ffead36fa08cc6e
+[Info   : Preloader] 0 patcher plugins loaded
+[Debug  :AssemblyPatcher] Assembly loaded: Il2Cppmscorlib.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Runtime.Serialization.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.TerrainPhysicsModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Drawing.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Platform.Utils.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Net.Http.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Games2Gether.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Collections.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Unika.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Psyshock.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UnityAnalyticsModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: DMotion.Runtime.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.InputSystem.ForUI.dll
+[Debug  :AssemblyPatcher] Assembly loaded: PrimeTween.Runtime.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Text.Encodings.Web.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Xml.Linq.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.LightPlacement.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.AccessibilityModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.ResourceManager.dll
+[Debug  :AssemblyPatcher] Assembly loaded: PrimeTween.LevelLife.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Glow.dll
+[Debug  :AssemblyPatcher] Assembly loaded: StreamingToolsmith.TPMTwitch.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.SpriteShapeModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.TextRenderingModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Transforms.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.DSPGraphModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Entities.dll
+[Debug  :AssemblyPatcher] Assembly loaded: BenSerialiser.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.UnityConsole.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Core.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.GPUTexCompression.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Serialization.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Xml.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.AssetBundleModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Kinemation.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Media.Utilities.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Burst.Unsafe.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Mathematics.Extensions.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Animation.Authoring.dll
+[Debug  :AssemblyPatcher] Assembly loaded: I2.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.AnimationModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.InputSystem.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.AudioModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.XRModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Online.PlayFabPlugins.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.MemoryProfiler.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.CloudShadows.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.HBAO.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Entities.Hybrid.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Addressables.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.VFXModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.InputLegacyModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.InputModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.EarlyLitPass.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.RenderPipelines.Universal.Runtime.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.DLC.dll
+[Debug  :AssemblyPatcher] Assembly loaded: SocketIOUnityAssembly.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Data.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.MeshGen.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.DirectorModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.TextMeshPro.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.InputForUIModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Game.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.ContentLoadModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Online.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Water.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.TextCoreTextEngineModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Utils.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.Physics2DModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Transforms.Hybrid.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Platform.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UnityWebRequestAssetBundleModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UIElementsModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Mathematics.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.ExpeditionMap.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UIModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UI.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Entities.Hybrid.HybridComponents.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Entities.Graphics.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Runtime.CompilerServices.Unsafe.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Backtrace.Unity.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Burst.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Native.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.ProceduralDrawList.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Newtonsoft.Json.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.GridModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Transforms.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.TerrainModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Game.Twitch.Core.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.VRModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Graphy.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.ProceduralDrawList.Rendering.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.JSONSerializeModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.Platform.Standalone.Steamworks.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.PropertiesModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.RenderPipeline.Universal.ShaderLibrary.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.RenderPipelines.Core.Runtime.dll
+[Debug  :AssemblyPatcher] Assembly loaded: PlayFab.dll
+[Debug  :AssemblyPatcher] Assembly loaded: ACL_Unity.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Myri.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.SharedInternalsModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: MessagePack.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Mathematics.Extensions.Hybrid.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.RenderPhoto.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppMono.Security.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Deformations.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.ImageConversionModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.CoasterRenderer.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.TilemapModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.ParticleSystemModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Core.VersionNumbering.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.TextCoreFontEngineModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Audio.DSPGraph.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.PhysicsModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.LifeFX.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.CharModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.CoreModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Core.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.SubsystemsModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: MousePosition.dll
+[Debug  :AssemblyPatcher] Assembly loaded: SharpConfig.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Reactive.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Octalux.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UnityAnalyticsCommonModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.ScreenCaptureModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Sirenix.OdinInspector.Attributes.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.Game.Twitch.Impl.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Steamworks.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.UnityWebRequestModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Latios.Calligraphics.dll
+[Debug  :AssemblyPatcher] Assembly loaded: LZ4net.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Collections.LowLevel.ILSupport.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Text.Json.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.AndroidJNIModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Scenes.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppSystem.Numerics.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.AIModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.RenderPipelines.GPUDriven.Runtime.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.IMGUIModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Il2CppMicrosoft.Bcl.AsyncInterfaces.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.HierarchyCoreModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: InspectorNavigator.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Splines.dll
+[Debug  :AssemblyPatcher] Assembly loaded: UnityEngine.VideoModule.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.RenderPipelines.Core.Runtime.Shared.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.ShaderDebug.dll
+[Debug  :AssemblyPatcher] Assembly loaded: Unity.Profiling.Core.dll
+[Debug  :AssemblyPatcher] Assembly loaded: TPS.ShaderLib.dll
+[Info   : Preloader] 0 assemblies discovered
+[Message:AssemblyPatcher] Executing 0 patch(es)
+[Message:   BepInEx] Chainloader initialized
+[Debug  : Preloader] Runtime invoke pointer: 0x123A50234
+[Message: Preloader] [DIAG] runtime_invoke stub 0x123A50234 -> impl 0x123A94A44
+[Message: Preloader] [DIAG] bytes@target BEFORE: F6-57-BD-A9-F4-4F-01-A9-FD-7B-02-A9-FD-83-00-91-F3-03-03-AA-F4-03-02-AA-F5-03-01-AA-F6-03-00-AA-43-00-00-B4-7F-02-00-F9-C8-9A-40-79-C8-00-20-36-C0-12-40-F9-80-00-00-B4-08-E4-40-B9-48-00-00-35
+[Debug  :DobbyDetour] Preparing detour from 0x123A94A44 to 0x30010C160
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC000
+[Debug  :DobbyDetour] GenerateNativeProxy skipped (arm64 MonoMod): NullReferenceException
+[Debug  :DobbyDetour] Original: 123A94A44, Trampoline: 11CDFC000, diff: 6C98A44
+[Debug  : Preloader] Runtime invoke patched
+[Message: Preloader] [DIAG] bytes@target AFTER:  51-00-00-58-20-02-1F-D6-60-C1-10-00-03-00-00-00
+[Message: Preloader] [DIAG] trampoline@0x11CDFC000 bytes: F6-57-BD-A9-F4-4F-01-A9-FD-7B-02-A9-FD-83-00-91-51-00-00-58-20-02-1F-D6-54-4A-A9-23-01-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
+[Message: Preloader] [DIAG] fallback loader armed (60s)
+[Message: Preloader] [DIAG] OnInvokeMethod FIRED - hook works! first method='InitializeSynchronizationContext'
+[Message: Preloader] [DIAG] scene-ish method: 'CleanupWorldBeforeSceneLoad'
+[Message: Preloader] [DIAG] scene-ish method: 'Internal_ActiveSceneChanged'
+[Message: Preloader] [DIAG] Internal_ActiveSceneChanged -> starting plugin load
+[Message: Preloader] [DIAG] (scene-hook) PreloadInteropAssemblies...
+[Message: Preloader] [DIAG] (scene-hook) Execute()...
+[Debug  :   BepInEx] Examining '/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/plugins/TpmMacMultiselect.dll'
+[Info   :   BepInEx] 13 plugins to load
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.39] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.38] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.37] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.36] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.35] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.34] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.33] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.32] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.31] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.30] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Warning:   BepInEx] Skipping [TPM Mac Multi-Select 0.4.21] because a newer version exists (TPM Mac Multi-Select 0.4.41)
+[Info   :   BepInEx] Loading [TPM Mac IL2CPP Host 0.4.0]
+[Info   :TPM Mac IL2CPP Host] TPM Mac IL2CPP Host 0.4.0 loaded (GUID=com.tpm.mac.il2cpp-host).
+[Info   :TPM Mac IL2CPP Host] [HOST] Kernel.Kind config=Interop → Interop (default=Interop)
+[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=True HostFacade.Ready=True — OK Il2CppSystem.String fields=218 methods=226 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+[Info   :TPM Mac IL2CPP Host] [HOST] Runtime Kind=Interop Ready=true
+[Info   :TPM Mac IL2CPP Host] [HOST] SharedHarmony id=com.tpm.mac.il2cpp-host.shared Ready=True
+[Warning:TPM Mac IL2CPP Host] [HOST][harmony] managed smoke skipped on arm64 (MonoMod has no managed detour backend); IL2CPP method patches are unaffected
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok ns=System name=String → Il2CppSystem.String handle valid; OK Il2CppSystem.String fields=218 methods=226 interop=/Users/weidu/Library/Application Support/Steam/steamapps/common/Two Point Museum/BepInEx/interop
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryInvoke op_Implicit("a10") → true (RuntimeObjectHandle)
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetField isWrapped → true value=False
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TrySetField isWrapped=False → true (idempotent rewrite)
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryGetTypeName → true name=Il2CppSystem.String
+[Warning:TPM Mac IL2CPP Host] [RT] InteropRuntimeKernel: TryFindObject: NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryFindObject → false (NotSupported (TaskA10): TryFindObject deferred; use TryInvoke/Field/Resolve)
+[Info   :TPM Mac IL2CPP Host] [RT] smoke TryResolveType ok image=TPS.Game ns=TPS.Game name=BuildMode
+[Info   :   BepInEx] Loading [TPM Mac Multi-Select 0.4.41]
+[Info   :TPM Mac Multi-Select] TPM Mac Multi-Select 0.4.41 loaded (ithm: full interop; legacy pointer/hook wiring off by default; no native detour, no poll)
+[Info   :TPM Mac Multi-Select] [MS] PlaceModeFieldPoll not started (user: no poll); GameAssembly prologue rewrite OFF; legacy hook path requires TPM_MS_LEGACY_HOOKS=1
+[Info   :TPM Mac Multi-Select] [MS] host ready / Kind=Interop / SharedHarmony acquired
+[Info   :TPM Mac Multi-Select] [MS][bridge] hover read removed. Task5 is [MS][select] HIT count.
+[Info   :TPM Mac Multi-Select] [MS] Il2CppItemSelectionBridge constructed (hover wired; Task6–8 pending)
+[Debug  :Il2CppInterop] Unable to find method Type::100666093
+[Debug  :Il2CppInterop] Unable to find method Type::100666094
+[Debug  :Il2CppInterop] Unable to find method Type::100666095
+[Debug  :Il2CppInterop] Unable to find method Type::100666096
+[Debug  :Il2CppInterop] Unable to find method Type::100666097
+[Debug  :Il2CppInterop] Unable to find method Type::100666098
+[Debug  :Il2CppInterop] Unable to find method Type::100666099
+[Debug  :Il2CppInterop] Unable to find method Type::100666100
+[Debug  :Il2CppInterop] Unable to find method Type::100666101
+[Debug  :Il2CppInterop] Unable to find method Type::100666102
+[Debug  :Il2CppInterop] Unable to find method Type::100666103
+[Debug  :Il2CppInterop] Unable to find method Type::100666104
+[Debug  :Il2CppInterop] Unable to find method Type::100666105
+[Debug  :Il2CppInterop] Unable to find method Type::100666106
+[Debug  :Il2CppInterop] Unable to find method Type::100666107
+[Debug  :Il2CppInterop] Unable to find method Type::100666108
+[Debug  :Il2CppInterop] Unable to find method Type::100666109
+[Debug  :Il2CppInterop] Unable to find method Type::100666110
+[Debug  :Il2CppInterop] Unable to find method Type::100666111
+[Debug  :Il2CppInterop] Unable to find method Type::100666112
+[Debug  :Il2CppInterop] Unable to find method Type::100666113
+[Debug  :Il2CppInterop] Unable to find method Type::100666114
+[Debug  :Il2CppInterop] Unable to find method Type::100666115
+[Debug  :Il2CppInterop] Unable to find method Type::100666117
+[Debug  :Il2CppInterop] Unable to find method Type::100666118
+[Debug  :Il2CppInterop] Unable to find method Type::100666119
+[Debug  :Il2CppInterop] Unable to find method Type::100666120
+[Debug  :Il2CppInterop] Unable to find method Type::100666121
+[Debug  :Il2CppInterop] Unable to find method Type::100666122
+[Debug  :Il2CppInterop] Unable to find method Type::100666123
+[Debug  :Il2CppInterop] Unable to find method Type::100666124
+[Debug  :Il2CppInterop] Unable to find method Type::100666127
+[Debug  :Il2CppInterop] Unable to find method Type::100666128
+[Debug  :Il2CppInterop] Unable to find method Type::100666129
+[Debug  :Il2CppInterop] Unable to find method Type::100666130
+[Debug  :Il2CppInterop] Unable to find method Type::100666131
+[Debug  :Il2CppInterop] Unable to find method Type::100666132
+[Debug  :DobbyDetour] Preparing detour from 0x124F52C38 to 0x30010C1A0
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC024
+[Debug  :DobbyDetour] Original: 124F52C38, Trampoline: 11CDFC024, diff: 8156C14
+[Warning:Il2CppInterop] Managed detour for virtual void TPS.Game.CursorManager::OnUpdate() skipped (MonoMod has no macOS arm64 support: Object reference not set to an instance of an object.). Native detour is active; direct managed calls to the wrapper will not see the patch.
+[Info   :TPM Mac Multi-Select] [MS][multi] patched CursorManager.OnUpdate
+[Debug  :DobbyDetour] Preparing detour from 0x1255FB3AC to 0x30010C1E0
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC048
+[Debug  :DobbyDetour] Original: 1255FB3AC, Trampoline: 11CDFC048, diff: 87FF364
+[Warning:Il2CppInterop] Managed detour for void TPS.Game.BuildLogic::StartGameDragSelect(TPS.Game.DragSelectMode dragSelectMode) skipped (MonoMod has no macOS arm64 support: Object reference not set to an instance of an object.). Native detour is active; direct managed calls to the wrapper will not see the patch.
+[Info   :TPM Mac Multi-Select] [MS][multi] patched BuildLogic.StartGameDragSelect
+[Debug  :DobbyDetour] Preparing detour from 0x124F5737C to 0x30010C220
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC06C
+[Debug  :DobbyDetour] Original: 124F5737C, Trampoline: 11CDFC06C, diff: 815B310
+[Warning:Il2CppInterop] Managed detour for void TPS.Game.CursorModeGameDragSelect::SetItemSelectedStatus(TPS.Game.GameItemInstance item, bool bSelected) skipped (MonoMod has no macOS arm64 support: Object reference not set to an instance of an object.). Native detour is active; direct managed calls to the wrapper will not see the patch.
+[Info   :TPM Mac Multi-Select] [MS][multi] patched CursorModeGameDragSelect.SetItemSelectedStatus
+[Debug  :DobbyDetour] Preparing detour from 0x124F57F48 to 0x30010C260
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC090
+[Debug  :DobbyDetour] Original: 124F57F48, Trampoline: 11CDFC090, diff: 815BEB8
+[Warning:Il2CppInterop] Managed detour for void TPS.Game.CursorModeGameDragSelect::CheckPromptProcessSelectedItems() skipped (MonoMod has no macOS arm64 support: Object reference not set to an instance of an object.). Native detour is active; direct managed calls to the wrapper will not see the patch.
+[Info   :TPM Mac Multi-Select] [MS][multi] patched CursorModeGameDragSelect.CheckPromptProcessSelectedItems
+[Debug  :DobbyDetour] Preparing detour from 0x124E4FB30 to 0x30010C2A0
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC0C4
+[Debug  :DobbyDetour] Original: 124E4FB30, Trampoline: 11CDFC0C4, diff: 8053A6C
+[Warning:Il2CppInterop] Managed detour for bool TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager::IsGroupSelectionAllowedForEntity(TPS.Core.Entities.ManagedEntity entity) skipped (MonoMod has no macOS arm64 support: Object reference not set to an instance of an object.). Native detour is active; direct managed calls to the wrapper will not see the patch.
+[Info   :TPM Mac Multi-Select] [MS][multi] patched LevelEditorGroupSelectionManager.IsGroupSelectionAllowedForEntity
+[Debug  :DobbyDetour] Preparing detour from 0x1255E6648 to 0x30010C2E0
+[Debug  :DobbyDetour] Prepared detour; Trampoline: 0x11CDFC0E8
+[Debug  :DobbyDetour] Original: 1255E6648, Trampoline: 11CDFC0E8, diff: 87EA560
+[Warning:Il2CppInterop] Managed detour for static bool TPS.Game.GameUtils::IsLevelEditorGroupSelectionAllowed() skipped (MonoMod has no macOS arm64 support: Object reference not set to an instance of an object.). Native detour is active; direct managed calls to the wrapper will not see the patch.
+[Info   :TPM Mac Multi-Select] [MS][multi] patched GameUtils.IsLevelEditorGroupSelectionAllowed
+[Info   :TPM Mac Multi-Select] [MS][multi] armed dryRun=False env[MULTISELECT]=1 env[AUTOARM]=<unset>
+[Message:   BepInEx] Chainloader startup complete
+[Message: Preloader] [DIAG] (scene-hook) Execute() done
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 1)
+[Info   :TPM Mac Multi-Select] [MS][multi] shift readable (carbon) down=False
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect(Demolish)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect body entered
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect returned
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeGameDragSelect (frame 126)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=10)
+[Info   :TPM Mac Multi-Select] [MS][multi] === takeover tracked=10 leader=GameItemInstance ===
+[Info   :TPM Mac Multi-Select] [MS][multi] gate hit #1
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] A before: raw=0 count=0 cursorCount=0 moving=False valid=False gate=True gLeader=none mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] manager offsets _selectedEntities=16 _groupLeader=24 _bSelectionMoving=32 _numInvalidChildItems=48 _levelState=96
+[Info   :TPM Mac Multi-Select] [MS][multi] SelectEntity ok=10/10
+[Info   :TPM Mac Multi-Select] [MS][multi] gate hit #2
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] B after SelectEntity: raw=10 count=0 cursorCount=0 moving=False valid=False gate=True gLeader=none mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] call BuildLogic.PlaceItem(leader, false, false)
+[Info   :TPM Mac Multi-Select] [MS][multi] pre PlaceItem (enter place mode) done
+[Info   :TPM Mac Multi-Select] [MS][multi] mode after PlaceItem=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] set _bSelectionMoving = true
+[Info   :TPM Mac Multi-Select] [MS][multi] SetupGroupLeader ok
+[Info   :TPM Mac Multi-Select] [MS][multi] InitialiseChildEntitiesForMoving ok
+[Info   :TPM Mac Multi-Select] [MS][multi] gate hit #3
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] C after direct start: raw=10 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive armed (calling ProcessMoveSelection each frame)
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModePlaceItem (frame 220)
+[Info   :TPM Mac Multi-Select] [MS][multi] left drag mode (tracked=0, events=20, takenOver=True)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=240 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=270 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=300 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=330 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=360 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=390 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=420 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=450 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=480 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=510 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 522)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=540 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=570 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect(Demolish)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect body entered
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect returned
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeGameDragSelect (frame 592)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=4)
+[Info   :TPM Mac Multi-Select] [MS][multi] === takeover tracked=4 leader=GameItemInstance ===
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] A before: raw=10 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] manager offsets _selectedEntities=16 _groupLeader=24 _bSelectionMoving=32 _numInvalidChildItems=48 _levelState=96
+[Info   :TPM Mac Multi-Select] [MS][multi] SelectEntity ok=4/4
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] B after SelectEntity: raw=13 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] call BuildLogic.PlaceItem(leader, false, false)
+[Info   :TPM Mac Multi-Select] [MS][multi] pre PlaceItem (enter place mode) done
+[Info   :TPM Mac Multi-Select] [MS][multi] mode after PlaceItem=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] set _bSelectionMoving = true
+[Info   :TPM Mac Multi-Select] [MS][multi] SetupGroupLeader ok
+[Info   :TPM Mac Multi-Select] [MS][multi] InitialiseChildEntitiesForMoving ok
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] C after direct start: raw=13 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive armed (calling ProcessMoveSelection each frame)
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModePlaceItem (frame 680)
+[Info   :TPM Mac Multi-Select] [MS][multi] left drag mode (tracked=0, events=8, takenOver=True)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=690 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=720 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=750 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 780)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=780 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=810 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=840 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect(Demolish)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect body entered
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect returned
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeGameDragSelect (frame 843)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=1)
+[Info   :TPM Mac Multi-Select] [MS][multi] === takeover tracked=1 leader=GameItemInstance ===
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] A before: raw=13 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] manager offsets _selectedEntities=16 _groupLeader=24 _bSelectionMoving=32 _numInvalidChildItems=48 _levelState=96
+[Info   :TPM Mac Multi-Select] [MS][multi] SelectEntity ok=1/1
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] B after SelectEntity: raw=13 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] call BuildLogic.PlaceItem(leader, false, false)
+[Info   :TPM Mac Multi-Select] [MS][multi] pre PlaceItem (enter place mode) done
+[Info   :TPM Mac Multi-Select] [MS][multi] mode after PlaceItem=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] set _bSelectionMoving = true
+[Info   :TPM Mac Multi-Select] [MS][multi] SetupGroupLeader ok
+[Info   :TPM Mac Multi-Select] [MS][multi] InitialiseChildEntitiesForMoving ok
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] C after direct start: raw=13 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive armed (calling ProcessMoveSelection each frame)
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModePlaceItem (frame 923)
+[Info   :TPM Mac Multi-Select] [MS][multi] left drag mode (tracked=0, events=2, takenOver=True)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=930 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=960 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 983)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=990 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1020 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect(Demolish)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect body entered
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect returned
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeGameDragSelect (frame 1023)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=4)
+[Info   :TPM Mac Multi-Select] [MS][multi] === takeover tracked=4 leader=GameItemInstance ===
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] A before: raw=13 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] manager offsets _selectedEntities=16 _groupLeader=24 _bSelectionMoving=32 _numInvalidChildItems=48 _levelState=96
+[Info   :TPM Mac Multi-Select] [MS][multi] SelectEntity ok=4/4
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] B after SelectEntity: raw=16 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] call BuildLogic.PlaceItem(leader, false, false)
+[Info   :TPM Mac Multi-Select] [MS][multi] pre PlaceItem (enter place mode) done
+[Info   :TPM Mac Multi-Select] [MS][multi] mode after PlaceItem=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] set _bSelectionMoving = true
+[Info   :TPM Mac Multi-Select] [MS][multi] SetupGroupLeader ok
+[Info   :TPM Mac Multi-Select] [MS][multi] InitialiseChildEntitiesForMoving ok
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] C after direct start: raw=16 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive armed (calling ProcessMoveSelection each frame)
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModePlaceItem (frame 1140)
+[Info   :TPM Mac Multi-Select] [MS][multi] left drag mode (tracked=0, events=8, takenOver=True)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1140 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1170 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1200 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1230 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1260 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1290 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 1303)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1320 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1350 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=1380 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect(Demolish)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect body entered
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect returned
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeGameDragSelect (frame 1385)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=0)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=0)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=0)
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 1802)
+[Info   :TPM Mac Multi-Select] [MS][multi] left drag mode (tracked=0, events=38, takenOver=False)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect(Demolish)
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect body entered
+[Info   :TPM Mac Multi-Select] [MS][multi] StartGameDragSelect returned
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeGameDragSelect (frame 1950)
+[Info   :TPM Mac Multi-Select] [MS][multi] prompt hook fired (tracked=6)
+[Info   :TPM Mac Multi-Select] [MS][multi] === takeover tracked=6 leader=GameItemInstance ===
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] A before: raw=16 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] manager offsets _selectedEntities=16 _groupLeader=24 _bSelectionMoving=32 _numInvalidChildItems=48 _levelState=96
+[Info   :TPM Mac Multi-Select] [MS][multi] SelectEntity ok=6/6
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] B after SelectEntity: raw=22 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModeGameDragSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] call BuildLogic.PlaceItem(leader, false, false)
+[Info   :TPM Mac Multi-Select] [MS][multi] pre PlaceItem (enter place mode) done
+[Info   :TPM Mac Multi-Select] [MS][multi] mode after PlaceItem=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] set _bSelectionMoving = true
+[Info   :TPM Mac Multi-Select] [MS][multi] SetupGroupLeader ok
+[Info   :TPM Mac Multi-Select] [MS][multi] InitialiseChildEntitiesForMoving ok
+[Warning:  HarmonyX] AccessTools.Method: Could not find method for type TPS.Game.GameLevelEditor.LevelEditorGroupSelectionManager and name AreLevelEditorGroupSelectionItemsValidForPlacement and parameters 
+[Info   :TPM Mac Multi-Select] [MS][multi] C after direct start: raw=22 count=0 cursorCount=0 moving=True valid=False gate=True gLeader=GameItemInstance mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive armed (calling ProcessMoveSelection each frame)
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModePlaceItem (frame 2024)
+[Info   :TPM Mac Multi-Select] [MS][multi] left drag mode (tracked=0, events=14, takenOver=True)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2040 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2070 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2100 moving=true mode=CursorModePlaceItem
+[Info   :TPM Mac Multi-Select] [MS][multi] mode -> CursorModeSelect (frame 2117)
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2130 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2160 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2190 moving=true mode=CursorModeSelect
+[Info   :TPM Mac Multi-Select] [MS][multi] drive frame=2220 moving=true mode=CursorModeSelect

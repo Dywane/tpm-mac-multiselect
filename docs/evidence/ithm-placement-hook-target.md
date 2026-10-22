@@ -1,11 +1,6 @@
 # ITHM Task4 — placement hook target
 
-Generated: 2026-10-21 10:43:53 Asia/Shanghai (box-local)
-
-**Current PRIMARY (MS 0.4.11):** methodPointer swap on `TPS.Game.CursorModePlaceItem.OnBecomeActive` (+ matching vtable slot). Prologue rewrite / Harmony.Patch OnBecomeActive OFF.
-
-- Cold-start PASS: `docs/evidence/ithm-0.4.11-methodpointer-smoke.md` (`8c5a6db`)
-- Placement / `PLACEMENT_READY` **field PASS**: `docs/evidence/ithm-0.4.11-placement-ready-20261021.md` (LogOutput mtime 2026-10-21 10:44:26 Asia/Shanghai; via=`CursorModePlaceItem.OnBecomeActive (methodPointer swap)`; no enter-side Dobby C12)
+Generated: 2026-10-22 14:54:32 Asia/Shanghai (box-local)
 
 | 目标 | 程序集 | 完整类型名 | 方法 | 选择理由 |
 |------|--------|------------|------|----------|
