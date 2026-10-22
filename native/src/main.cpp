@@ -147,6 +147,9 @@ static bool g_takenOver = false;
 static bool g_driveMove = false;
 static bool g_cancelRequested = false;
 static void* g_placeItemModeClass = nullptr;
+static void* g_dragModeInstance = nullptr;
+static std::vector<void*> g_cancelSnapshot;
+static void* g_setItemSelectedMethod = nullptr;
 static int g_selectEvents = 0;
 static std::vector<void*> g_selected;
 static void* g_leader = nullptr;
@@ -278,6 +281,7 @@ static void ResetState(const char* why)
     g_driveMove = false;
     g_wasPlacing = false;
     g_cancelRequested = false;
+    g_cancelSnapshot.clear();
     Dbg("reset (%s)", why);
 }
 
@@ -338,13 +342,40 @@ static void TakeOver()
     }
 }
 
+static void DeselectInDragMode()
+{
+    if (!g_dragModeInstance || !g_setItemSelectedMethod) return;
+
+    // Call on a copy: the call goes through our own hook, which mutates g_selected.
+    std::vector<void*> items = g_selected.empty() ? g_cancelSnapshot : g_selected;
+    for (void* item : items)
+        CallEntityBool(g_setItemSelectedMethod, g_dragModeInstance, item, false);
+
+    Log("drag mode selection cleared (%zu)", items.size());
+}
+
 static void FinishGroup(const char* why)
 {
+    DeselectInDragMode();
     void* manager = ManagerInstance();
+    bool cancelled = g_cancelRequested;
+    g_cancelRequested = false;
+
     if (manager && IsMoving(manager))
     {
-        Call0(g_finaliseChildren, manager);
-        Log("finalised group (%s)", why);
+        if (cancelled)
+        {
+            // Mirror the ungated tail of OnPlaceEntityCancel(sold=false, destroyed=false,
+            // restored=true): drop the bounds highlight, snap the group back, then clear.
+            if (g_hideBounds) Call0(g_hideBounds, manager);
+            CallBool(g_processMove, manager, true);
+            Log("cancelled group (%s)", why);
+        }
+        else
+        {
+            Call0(g_finaliseChildren, manager);
+            Log("finalised group (%s)", why);
+        }
     }
 
     ClearManager(why);
@@ -434,6 +465,7 @@ static void OnUpdateHook(void* self, const void* methodInfo)
 static void SetItemSelectedHook(void* self, void* item, bool selected, const void* methodInfo)
 {
     g_selectEvents++;
+    g_dragModeInstance = self;
     if (item)
     {
         if (selected)
@@ -453,6 +485,8 @@ static void SetItemSelectedHook(void* self, void* item, bool selected, const voi
     if (origSetSelected) origSetSelected(self, item, selected, methodInfo);
 }
 
+static void FinishGroup(const char* why);
+
 static void (*origOnCancelItem)(void*, bool, const void*) = nullptr;
 
 /// Right click in place mode: remember that the group must be restored, not committed.
@@ -461,10 +495,20 @@ static void OnCancelItemHook(void* self, bool sell, const void* methodInfo)
     if (g_takenOver && IsMoving(ManagerInstance()))
     {
         g_cancelRequested = true;
-        Log("cancel requested");
+        // The drag select runs in the Demolish flavour, so the game can arrive here with sell=true.
+        // Never forward that: right click must cancel, not sell the group.
+        if (sell) Log("cancel came in as sell=true, forcing false");
+        sell = false;
+        g_cancelSnapshot = g_selected; // the original cancel clears our tracking
+        Log("cancel requested (%zu tracked)", g_cancelSnapshot.size());
     }
 
     if (origOnCancelItem) origOnCancelItem(self, sell, methodInfo);
+
+    // The game's own OnPlaceEntityCancel is gated and never runs, so finish the cancel here, after
+    // the mode has put the leader back. Doing it on the next tick was too late: the children kept
+    // chasing the cursor and the entities stayed locked.
+    if (g_cancelRequested) FinishGroup("cancel inline");
 }
 
 static bool PromptHook(void* self, const void* methodInfo)
@@ -650,6 +694,7 @@ static void* Worker(void*)
 
     void* onUpdate = GetMethod(g_cursorManagerClass, "OnUpdate", 0);
     void* setSelected = GetMethod(g_dragModeClass, "SetItemSelectedStatus", 2);
+    g_setItemSelectedMethod = setSelected;
     void* prompt = GetMethod(g_dragModeClass, "CheckPromptProcessSelectedItems", 0);
 
     if (!onUpdate || !setSelected || !prompt || !onCancel)
