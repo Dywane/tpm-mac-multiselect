@@ -10,7 +10,7 @@ cmake --build "$HERE/build" >/dev/null
 rm -rf "$OUT"
 mkdir -p "$OUT"
 cp "$HERE/build/libtpm_ms.dylib" "$OUT/"
-cp "$HERE/lib/libdobby.dylib" "$OUT/"
+cp "$HERE/lib/DOBBY-LICENSE.txt" "$OUT/"
 cp "$HERE/run_tpm.sh" "$OUT/"
 cp "$HERE/README-dist.md" "$OUT/README.md"
 chmod +x "$OUT/run_tpm.sh"

@@ -135,6 +135,7 @@ static void* g_setupGroupLeader = nullptr;
 static void* g_initChildren = nullptr;
 static void* g_processMove = nullptr;
 static void* g_finaliseChildren = nullptr;
+static void* g_hideBounds = nullptr;
 static void* g_clearAll = nullptr;
 
 static int g_frames = 0;
@@ -144,6 +145,8 @@ static bool g_wasDragging = false;
 static bool g_wasPlacing = false;
 static bool g_takenOver = false;
 static bool g_driveMove = false;
+static bool g_cancelRequested = false;
+static void* g_placeItemModeClass = nullptr;
 static int g_selectEvents = 0;
 static std::vector<void*> g_selected;
 static void* g_leader = nullptr;
@@ -274,6 +277,7 @@ static void ResetState(const char* why)
     g_takenOver = false;
     g_driveMove = false;
     g_wasPlacing = false;
+    g_cancelRequested = false;
     Dbg("reset (%s)", why);
 }
 
@@ -449,6 +453,20 @@ static void SetItemSelectedHook(void* self, void* item, bool selected, const voi
     if (origSetSelected) origSetSelected(self, item, selected, methodInfo);
 }
 
+static void (*origOnCancelItem)(void*, bool, const void*) = nullptr;
+
+/// Right click in place mode: remember that the group must be restored, not committed.
+static void OnCancelItemHook(void* self, bool sell, const void* methodInfo)
+{
+    if (g_takenOver && IsMoving(ManagerInstance()))
+    {
+        g_cancelRequested = true;
+        Log("cancel requested");
+    }
+
+    if (origOnCancelItem) origOnCancelItem(self, sell, methodInfo);
+}
+
 static bool PromptHook(void* self, const void* methodInfo)
 {
     (void)self;
@@ -613,6 +631,7 @@ static void* Worker(void*)
     g_processMove = GetMethod(g_managerClass, "ProcessMoveSelection", 1);
     g_finaliseChildren = GetMethod(g_managerClass, "FinaliseChildEntitiesForMoving", 0);
     g_clearAll = GetMethod(g_managerClass, "ClearAllSelectedEntities", 0);
+    g_hideBounds = GetMethod(g_managerClass, "HideSelectedEntityBounds", 0);
 
     Dbg("offsets mode=0x%zx manager=0x%zx moving=0x%zx", g_modeOffset, g_managerOffset, g_movingOffset);
     Dbg("methods drag=%p place=%p select=%p setup=%p init=%p move=%p final=%p clear=%p",
@@ -626,13 +645,17 @@ static void* Worker(void*)
         return nullptr;
     }
 
+    g_placeItemModeClass = FindClass(domain, "TPS.Game.dll", "TPS.Game", "CursorModePlaceItem");
+    void* onCancel = g_placeItemModeClass ? GetMethod(g_placeItemModeClass, "OnCancelItem", 1) : nullptr;
+
     void* onUpdate = GetMethod(g_cursorManagerClass, "OnUpdate", 0);
     void* setSelected = GetMethod(g_dragModeClass, "SetItemSelectedStatus", 2);
     void* prompt = GetMethod(g_dragModeClass, "CheckPromptProcessSelectedItems", 0);
 
-    if (!onUpdate || !setSelected || !prompt)
+    if (!onUpdate || !setSelected || !prompt || !onCancel)
     {
-        Log("hook target missing update=%p select=%p prompt=%p", onUpdate, setSelected, prompt);
+        Log("hook target missing update=%p select=%p prompt=%p cancel=%p",
+            onUpdate, setSelected, prompt, onCancel);
         return nullptr;
     }
 
@@ -643,7 +666,12 @@ static void* Worker(void*)
     int rc3 = DobbyHook(MethodPtr(prompt), reinterpret_cast<void*>(&PromptHook),
                         reinterpret_cast<void**>(&origPrompt));
 
-    Log("hooks installed update=%d select=%d prompt=%d", rc1, rc2, rc3);
+    int rc4 = onCancel
+                  ? DobbyHook(MethodPtr(onCancel), reinterpret_cast<void*>(&OnCancelItemHook),
+                              reinterpret_cast<void**>(&origOnCancelItem))
+                  : -1;
+
+    Log("hooks installed update=%d select=%d prompt=%d cancel=%d", rc1, rc2, rc3, rc4);
     Log("ready");
     return nullptr;
 }

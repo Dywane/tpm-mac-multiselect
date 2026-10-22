@@ -30,7 +30,7 @@ Or set Steam launch options to:
 1. Make sure the cursor is in the normal select mode (not placing anything).
 2. Hold **Left Shift** and drag a rectangle over the items.
 3. Release: the group follows the cursor.
-4. **Left click** places the group, **right click** cancels.
+4. **Left click** places the group, **right click** cancels and restores the original positions.
 
 Walls, doors, windows and wall-mounted items are filtered out by the game's own drag select.
 
@@ -41,6 +41,11 @@ Walls, doors, windows and wall-mounted items are filtered out by the game's own 
 ## Uninstall
 
 Delete the folder. Nothing inside the game installation is modified.
+
+## Third party
+
+Hooking uses [Dobby](https://github.com/jmpews/Dobby) (Apache-2.0), statically linked.
+Its licence is included as `DOBBY-LICENSE.txt`.
 
 ## Notes
 
