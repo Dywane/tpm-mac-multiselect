@@ -1,3 +1,5 @@
+Do not deploy this build. `allow override on` was logged, then `SelectEntity before i=0 class=GameItemInstance`, then SIGSEGV at `GameAssembly+0x17fe449` again. The MethodPointer write did not stop that body. MS 0.4.40 does not call SelectEntity. See `docs/evidence/ithm-select-0.4.40.md`.
+
 # ITHM Task5 stop the allow body SelectEntity enters (MS 0.4.39)
 
 **MS:** 0.4.39

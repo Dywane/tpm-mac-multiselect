@@ -20,7 +20,7 @@ static class DragSelectWatch
     const int IntKind = 8;
     const int EnumKind = 0x55;
     const int SzArrayKind = 29;
-    const int MaxGateSlots = 32;
+    const int MaxGateSlots = 8;
     const int ProbeCandidates0 = 303;
     const int ProbeCandidates1 = 304;
     const int ProbeCandidates2 = 305;
@@ -110,9 +110,7 @@ static class DragSelectWatch
     static IntPtr _allowMethod;
     static bool _allowSkipLogged;
     static IntPtr _selectMethod;
-    static bool _selectBoolFirst;
     static bool _groupBound;
-    static bool _selectThrew;
     static string _groupWhy = "";
     static string _copyWhy = "";
     static readonly int[] _codes = new int[3];
@@ -155,9 +153,7 @@ static class DragSelectWatch
     static IntPtr _gateMethod;
     static IntPtr _gateOriginal;
     static IntPtr _gateHook;
-    static IntPtr _allowOriginal;
-    static bool _allowVirtual;
-    static bool _allowHooked;
+    static bool _selectSkipped;
     static SuppressReturn? _gateThunk;
     static bool _gateVirtual;
     static bool _gateInstalled;
@@ -527,6 +523,7 @@ static class DragSelectWatch
     static void Finish(IntPtr cursor)
     {
         _finishing = true;
+        _selectSkipped = false;
         var leader = IntPtr.Zero;
         var mgr = IntPtr.Zero;
         try
@@ -565,7 +562,7 @@ static class DragSelectWatch
             var failed = false;
             if (leader != IntPtr.Zero)
                 Plugin.LogSrc.LogInfo("[MS][select] leader class=" + ClassName(leader));
-            if (leader != IntPtr.Zero && afterCount == 0)
+            if (leader != IntPtr.Zero && afterCount == 0 && !_selectSkipped)
             {
                 Plugin.LogSrc.LogError("[MS][select] ERROR group emptied by CancelBuild");
                 if (mgr != IntPtr.Zero)
@@ -2121,7 +2118,6 @@ static class DragSelectWatch
 
         if (filtered > 0)
             InstallGate();
-        HookAllow();
         if (!_allowSkipLogged)
         {
             _allowSkipLogged = true;
@@ -2129,40 +2125,23 @@ static class DragSelectWatch
         }
 
         InvokeClear(mgr);
-        var kept = 0;
-        var rejected = 0;
-        var failed = 0;
         var leader = IntPtr.Zero;
         for (var i = 0; i < filtered; i++)
         {
             if (chosen[i] == IntPtr.Zero)
-            {
-                rejected++;
                 continue;
-            }
-
-            Plugin.LogSrc.LogInfo(
-                "[MS][select] SelectEntity before i=" + i +
-                " class=" + ClassName(chosen[i]) +
-                " entity=" + chosen[i].ToInt64().ToString("X") +
-                " mgr=" + mgr.ToInt64().ToString("X"));
-            if (!InvokeSelect(mgr, chosen[i]))
-            {
-                failed++;
-                continue;
-            }
-
-            kept++;
-            if (leader == IntPtr.Zero)
-                leader = chosen[i];
+            leader = chosen[i];
+            break;
         }
 
-        Plugin.LogSrc.LogInfo(
-            "[MS][select] SelectEntity enter count=" + kept +
-            " copied=" + copied +
-            " filtered=" + filtered +
-            " rejected=" + rejected +
-            " failed=" + failed);
+        _selectSkipped = true;
+        if (leader == IntPtr.Zero)
+            Plugin.LogSrc.LogInfo("[MS][select] SelectEntity skip reason=native-body-0.4.39 leader=none");
+        else
+            Plugin.LogSrc.LogInfo(
+                "[MS][select] SelectEntity skip reason=native-body-0.4.39 class=" + ClassName(leader) +
+                " entity=" + leader.ToInt64().ToString("X") +
+                " mgr=" + mgr.ToInt64().ToString("X"));
         return leader;
     }
 
@@ -2479,7 +2458,7 @@ static class DragSelectWatch
         _countMethod = FindInstanceZeroArg(klass, "LevelEditorGroupSelectionItemsCount");
         _clearMethod = FindInstanceZeroArg(klass, "ClearAllSelectedEntities");
         _allowMethod = FindInstanceArgc(klass, "IsGroupSelectionAllowedForEntity", 1);
-        if (!TryFindSelect(klass, out _selectMethod, out _selectBoolFirst, out var paramText))
+        if (!TryFindSelect(klass, out _selectMethod, out _, out var paramText))
         {
             _groupWhy = "SelectEntity " + paramText + " " + MethodNames(klass);
             return false;
@@ -2579,35 +2558,6 @@ static class DragSelectWatch
             Plugin.LogSrc.LogError("[MS][select] ClearAll exit exc=" + ClassName(exc));
         else
             Plugin.LogSrc.LogInfo("[MS][select] ClearAll exit");
-    }
-
-    static unsafe bool InvokeSelect(IntPtr mgr, IntPtr entity)
-    {
-        var exc = IntPtr.Zero;
-        var obj = entity;
-        var flag = 1;
-        var argv = stackalloc void*[2];
-        if (_selectBoolFirst)
-        {
-            argv[0] = &flag;
-            argv[1] = &obj;
-        }
-        else
-        {
-            argv[0] = &obj;
-            argv[1] = &flag;
-        }
-
-        IL2CPP.il2cpp_runtime_invoke(_selectMethod, mgr, argv, ref exc);
-        if (exc == IntPtr.Zero)
-            return true;
-        if (!_selectThrew)
-        {
-            _selectThrew = true;
-            Plugin.LogSrc.LogError("[MS][select] SelectEntity exception " + ClassName(exc));
-        }
-
-        return false;
     }
 
     static IntPtr FindInstanceArgc(IntPtr klass, string methodName, uint argc)
@@ -3174,51 +3124,6 @@ static class DragSelectWatch
         Plugin.LogSrc.LogInfo("[MS][select] gate override on");
     }
 
-    static void HookAllow()
-    {
-        if (_allowHooked)
-            return;
-        if (_gateThunk == null)
-            _gateThunk = GateTrue;
-        if (_gateHook == IntPtr.Zero)
-            _gateHook = Marshal.GetFunctionPointerForDelegate(_gateThunk);
-        if (_allowMethod == IntPtr.Zero || _gateHook == IntPtr.Zero ||
-            !MethodPointerRedirect.TryRead(_allowMethod, out var original) || original == IntPtr.Zero)
-        {
-            Plugin.LogSrc.LogInfo("[MS][select] allow override miss");
-            return;
-        }
-
-        unsafe
-        {
-            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_allowMethod);
-            var virtualHit = false;
-            if (info.VirtualMethodPointer == original)
-            {
-                info.VirtualMethodPointer = _gateHook;
-                virtualHit = true;
-            }
-
-            info.MethodPointer = _gateHook;
-            if (info.MethodPointer != _gateHook)
-            {
-                info.MethodPointer = original;
-                if (virtualHit)
-                    info.VirtualMethodPointer = original;
-                Plugin.LogSrc.LogInfo("[MS][select] allow override miss");
-                return;
-            }
-
-            _allowOriginal = original;
-            _allowVirtual = virtualHit;
-            if (info.Class != null)
-                RedirectGateSlots(info.Class, original);
-        }
-
-        _allowHooked = true;
-        Plugin.LogSrc.LogInfo("[MS][select] allow override on");
-    }
-
     static unsafe void RedirectGateSlots(Il2CppClass* start, IntPtr original)
     {
         var depth = 0;
@@ -3250,26 +3155,14 @@ static class DragSelectWatch
 
     static void RestoreGate()
     {
-        if (!_gateInstalled && !_allowHooked)
+        if (!_gateInstalled)
             return;
         unsafe
         {
-            if (_gateInstalled && _gateMethod != IntPtr.Zero)
-            {
-                var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_gateMethod);
-                info.MethodPointer = _gateOriginal;
-                if (_gateVirtual)
-                    info.VirtualMethodPointer = _gateOriginal;
-            }
-
-            if (_allowHooked && _allowMethod != IntPtr.Zero)
-            {
-                var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_allowMethod);
-                info.MethodPointer = _allowOriginal;
-                if (_allowVirtual)
-                    info.VirtualMethodPointer = _allowOriginal;
-            }
-
+            var info = UnityVersionHandler.Wrap((Il2CppMethodInfo*)_gateMethod);
+            info.MethodPointer = _gateOriginal;
+            if (_gateVirtual)
+                info.VirtualMethodPointer = _gateOriginal;
             for (var s = 0; s < _gateSlotCount; s++)
             {
                 var entry = _gateSlotVtable[s] + _gateSlotIndex[s] * MethodPointerRedirect.VirtualInvokeStride;
@@ -3279,7 +3172,6 @@ static class DragSelectWatch
         }
 
         _gateInstalled = false;
-        _allowHooked = false;
         _gateSlotCount = 0;
         Plugin.LogSrc.LogInfo("[MS][select] gate override off");
     }
