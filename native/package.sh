@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build a distributable folder + zip.
+# Build the mod payload archive (dylib + readme only; the loader is shipped separately).
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd -P)"
 OUT="$HERE/dist/tpm-multiselect-macos-arm64"
@@ -11,9 +11,7 @@ rm -rf "$OUT"
 mkdir -p "$OUT"
 cp "$HERE/build/libtpm_ms.dylib" "$OUT/"
 cp "$HERE/lib/DOBBY-LICENSE.txt" "$OUT/"
-cp "$HERE/run_tpm.sh" "$OUT/"
 cp "$HERE/README-dist.md" "$OUT/README.md"
-chmod +x "$OUT/run_tpm.sh"
 
 rm -f "$HERE/dist/tpm-multiselect-macos-arm64.zip"
 ditto -c -k --keepParent "$OUT" "$HERE/dist/tpm-multiselect-macos-arm64.zip"

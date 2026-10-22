@@ -2,7 +2,9 @@
 
 The Workshop item is only a **file bundle**: Steam downloads it into
 `steamapps/workshop/content/2185060/<itemid>/`. The game never executes it — the player
-starts the game through `run_tpm.sh`, which injects the dylib found in that folder.
+launches through the **TPM Mac Loader**, which injects every dylib it finds there.
+
+The item therefore contains the payload only: `libtpm_ms.dylib` + `version.txt`.
 
 ## One-time setup
 
@@ -29,19 +31,17 @@ update the same item instead of creating a new one.
 1. Bump `workshop/content/version.txt` and `changenote` in the VDF.
 2. `native/package.sh`
 3. `cp native/dist/tpm-multiselect-macos-arm64/libtpm_ms.dylib workshop/content/`
-4. `cp native/run_tpm.sh workshop/content/`
 5. Re-run the `steamcmd` command above.
 
 ## Player instructions (also in the item description)
 
 ```
 Set Steam launch options for Two Point Museum to:
-bash "<Steam>/steamapps/workshop/content/2185060/<itemid>/run_tpm.sh" %command%
+"/path/to/tpm-mac-loader/run_tpm.sh" %command%
 ```
 
-The launcher looks for the dylib next to itself, then in `build/`, then for the newest
-`libtpm_ms.dylib` anywhere under `steamapps/workshop/content/2185060/`, so subscribed
-updates are picked up automatically without moving files.
+The loader injects every `*.dylib` under `steamapps/workshop/content/2185060/`, so
+subscribed updates take effect without the player moving files.
 
 ## Notes
 

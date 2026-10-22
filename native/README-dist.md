@@ -1,53 +1,29 @@
-# TPM Mac Multi-Select (arm64)
+# Multi-Select for Two Point Museum — macOS (arm64) payload
 
-Rectangle multi-select and group movement for **The Planet of the Machines** on Apple Silicon macOS.
-No BepInEx, no .NET runtime, no modification of the game bundle.
-
-## Requirements
-
-- Apple Silicon Mac, macOS 13+
-- Two Point Museum (Steam)
+This archive contains only the mod payload (`libtpm_ms.dylib`). It is loaded by the
+**TPM Mac Loader**, which injects every dylib it finds.
 
 ## Install
 
-1. Unpack this folder anywhere (e.g. `~/Applications/tpm-multiselect`).
-2. Quit the game.
-
-## Run
-
-```sh
-./run_tpm.sh
-```
-
-Or set Steam launch options to:
-
-```
-/path/to/run_tpm.sh %command%
-```
+1. Get the loader (one-time): `tpm-mac-loader.zip` from the same releases page.
+   Unpack it, then point the game's Steam launch options at it:
+   ```
+   "/path/to/loader/run_tpm.sh" %command%
+   ```
+2. Put `libtpm_ms.dylib` into `<loader>/mods/`,
+   or subscribe to the Workshop item (Steam downloads it and the loader picks it up).
 
 ## Use
 
-1. Make sure the cursor is in the normal select mode (not placing anything).
-2. Hold **Left Shift** and drag a rectangle over the items.
-3. Release: the group follows the cursor.
-4. **Left click** places the group, **right click** cancels and restores the original positions.
+| Action | Result |
+|---|---|
+| Left Shift + drag | rectangle select |
+| release | the whole group follows the cursor |
+| left click | place the group |
+| right click | cancel and restore the original positions |
 
-Walls, doors, windows and wall-mounted items are filtered out by the game's own drag select.
+## Requirements
 
-## Logs
+Apple Silicon Mac, macOS 13+, Two Point Museum (Steam). Intel Macs are not supported.
 
-`/tmp/tpm_ms_native.log`. Add `TPM_MS_DEBUG=1` before launching for verbose output.
-
-## Uninstall
-
-Delete the folder. Nothing inside the game installation is modified.
-
-## Third party
-
-Hooking uses [Dobby](https://github.com/jmpews/Dobby) (Apache-2.0), statically linked.
-Its licence is included as `DOBBY-LICENSE.txt`.
-
-## Notes
-
-- Tested against game build 12.0.244870. Class/method lookup is by name, so minor game updates
-  should keep working; major rewrites may need a rebuild.
+Log: `/tmp/tpm_ms_native.log` (`TPM_MS_DEBUG=1` for verbose output).
