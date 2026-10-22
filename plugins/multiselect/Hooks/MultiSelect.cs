@@ -28,6 +28,7 @@ internal static class MultiSelect
     public const string EnvName = "TPM_MS_MULTISELECT";
     public const string DryRunEnvName = "TPM_MS_DRYRUN";
     public const string AutoArmEnvName = "TPM_MS_AUTOARM";
+    public const string DebugEnvName = "TPM_MS_DEBUG";
 
     const int FieldStatic = 0x0010;
     const uint CocoaShift = 512;
@@ -36,6 +37,7 @@ internal static class MultiSelect
     static ManualLogSource Log = null!;
     static HarmonyLib.Harmony _harmony = null!;
     static bool _dryRun;
+    static bool _debug;
 
     static int _frames;
     static int _selectFrames;
@@ -73,6 +75,7 @@ internal static class MultiSelect
         Log = Plugin.LogSrc;
         _harmony = harmony;
         _dryRun = string.Equals(Environment.GetEnvironmentVariable(DryRunEnvName), "1", StringComparison.Ordinal);
+        _debug = string.Equals(Environment.GetEnvironmentVariable(DebugEnvName), "1", StringComparison.Ordinal);
 
         Patch(typeof(CursorManager), "OnUpdate", nameof(OnUpdatePost), postfix: true);
         Patch(typeof(BuildLogic), "StartGameDragSelect", nameof(StartDragPrefix), prefix: true);
@@ -81,9 +84,12 @@ internal static class MultiSelect
         Patch(typeof(EditorManager), "IsGroupSelectionAllowedForEntity", nameof(AllowPrefix), prefix: true);
         Patch(typeof(GameUtils), "IsLevelEditorGroupSelectionAllowed", nameof(GatePrefix), prefix: true);
 
-        Log.LogInfo("[MS][multi] armed dryRun=" + _dryRun +
-                    " env[MULTISELECT]=" + (Environment.GetEnvironmentVariable(EnvName) ?? "<unset>") +
-                    " env[AUTOARM]=" + (Environment.GetEnvironmentVariable(AutoArmEnvName) ?? "<unset>"));
+        Log.LogInfo("[MS][multi] armed (debug=" + _debug + ", dryRun=" + _dryRun + ")");
+    }
+
+    static void Dbg(string message)
+    {
+        if (_debug) Log.LogInfo(message);
     }
 
     static void Patch(System.Type type, string name, string patchName, bool prefix = false, bool postfix = false)
@@ -99,7 +105,7 @@ internal static class MultiSelect
 
             var method = new HarmonyMethod(typeof(MultiSelect), patchName);
             _harmony.Patch(target, prefix ? method : null, postfix ? method : null);
-            Log.LogInfo("[MS][multi] patched " + type.Name + "." + name);
+            Dbg("[MS][multi] patched " + type.Name + "." + name);
         }
         catch (Exception ex)
         {
@@ -127,7 +133,7 @@ internal static class MultiSelect
             if (modeName != _lastMode)
             {
                 _lastMode = modeName;
-                Log.LogInfo("[MS][multi] mode -> " + modeName + " (frame " + _frames + ")");
+                Dbg("[MS][multi] mode -> " + modeName + " (frame " + _frames + ")");
             }
 
             if (modeName == "CursorModeGameDragSelect")
@@ -137,7 +143,7 @@ internal static class MultiSelect
             else if (_wasDragging)
             {
                 _wasDragging = false;
-                Log.LogInfo("[MS][multi] left drag mode (tracked=" + _selected.Count +
+                Dbg("[MS][multi] left drag mode (tracked=" + _selected.Count +
                             ", events=" + _selectEvents + ", takenOver=" + _takenOver + ")");
             }
 
@@ -185,7 +191,7 @@ internal static class MultiSelect
             if (!_shiftReadLogged)
             {
                 _shiftReadLogged = true;
-                Log.LogInfo("[MS][multi] shift readable (carbon) down=" + down);
+                Dbg("[MS][multi] shift readable (carbon) down=" + down);
             }
         }
         catch
@@ -228,9 +234,9 @@ internal static class MultiSelect
 
             var arg = Enum.ToObject(mi.GetParameters()[0].ParameterType, 0);
             ResetRun();
-            Log.LogInfo("[MS][multi] StartGameDragSelect(" + arg + ")");
+            Dbg("[MS][multi] StartGameDragSelect(" + arg + ")");
             mi.Invoke(new BuildLogic(instance), new[] { arg });
-            Log.LogInfo("[MS][multi] StartGameDragSelect returned");
+            Dbg("[MS][multi] StartGameDragSelect returned");
         }
         catch (Exception ex)
         {
@@ -277,7 +283,7 @@ internal static class MultiSelect
                     Marshal.WriteByte(_manager.Pointer, movingOffset, 0);
 
                 InvokeManager("ClearAllSelectedEntities", Array.Empty<object>());
-                Log.LogInfo("[MS][multi] manager cleared (" + why + ") raw=" + RawListCount());
+                Dbg("[MS][multi] manager cleared (" + why + ") raw=" + RawListCount());
             }
         }
         catch (Exception ex)
@@ -364,12 +370,12 @@ internal static class MultiSelect
 
     static void StartDragPrefix(CursorModeGameDragSelect __instance)
     {
-        Log.LogInfo("[MS][multi] StartGameDragSelect body entered");
+        Dbg("[MS][multi] StartGameDragSelect body entered");
     }
 
     static bool PromptPrefix()
     {
-        Log.LogInfo("[MS][multi] prompt hook fired (tracked=" + _selected.Count + ")");
+        Dbg("[MS][multi] prompt hook fired (tracked=" + _selected.Count + ")");
         if (_dryRun) return true;
         if (!_takenOver && _selected.Count > 0)
         {
@@ -400,8 +406,7 @@ internal static class MultiSelect
             }
 
             _leader = _selected[0];
-            Log.LogInfo("[MS][multi] === takeover tracked=" + _selected.Count +
-                        " leader=" + ClassName(_leader) + " ===");
+            Log.LogInfo("[MS][multi] group move: " + _selected.Count + " items");
             DumpState("A before");
             DumpManagerOffsets();
 
@@ -445,7 +450,7 @@ internal static class MultiSelect
         Log.LogInfo("[MS][multi] mode after PlaceItem=" + CurrentModeName());
 
         Marshal.WriteByte(_manager.Pointer, movingOffset, 1);
-        Log.LogInfo("[MS][multi] set _bSelectionMoving = true");
+        Dbg("[MS][multi] set _bSelectionMoving = true");
 
         InvokeManager("SetupGroupLeader", new object[] { new GameItemInstance(_leader) });
         InvokeManager("InitialiseChildEntitiesForMoving", Array.Empty<object>());
@@ -454,7 +459,7 @@ internal static class MultiSelect
         if (IsMoving())
         {
             _driveMove = true;
-            Log.LogInfo("[MS][multi] drive armed (calling ProcessMoveSelection each frame)");
+            Dbg("[MS][multi] drive armed (calling ProcessMoveSelection each frame)");
         }
         else
         {
@@ -475,7 +480,7 @@ internal static class MultiSelect
         try
         {
             mi.Invoke(_manager, args);
-            Log.LogInfo("[MS][multi] " + name + " ok");
+            Dbg("[MS][multi] " + name + " ok");
         }
         catch (Exception ex)
         {
@@ -489,7 +494,7 @@ internal static class MultiSelect
         if (!_driveMove || _manager == null) return;
         if (!IsMoving())
         {
-            Log.LogInfo("[MS][multi] move stopped (bSelectionMoving=false) mode=" + CurrentModeName());
+            Dbg("[MS][multi] move stopped (bSelectionMoving=false) mode=" + CurrentModeName());
             _driveMove = false;
             return;
         }
@@ -506,7 +511,7 @@ internal static class MultiSelect
 
             mi.Invoke(_manager, new object[] { false });
             if (_frames % 30 == 0)
-                Log.LogInfo("[MS][multi] drive frame=" + _frames + " moving=true mode=" + CurrentModeName());
+                Dbg("[MS][multi] drive frame=" + _frames + " moving=true mode=" + CurrentModeName());
         }
         catch (Exception ex)
         {
@@ -522,7 +527,7 @@ internal static class MultiSelect
         {
             Log.LogInfo("[MS][multi] call BuildLogic.PlaceItem(leader, false, false)");
             BuildLogic.PlaceItem(new GameItemInstance(_leader), false, false);
-            Log.LogInfo("[MS][multi] " + tag + " done");
+            Dbg("[MS][multi] " + tag + " done");
         }
         catch (Exception ex)
         {
@@ -555,7 +560,7 @@ internal static class MultiSelect
             }
         }
 
-        Log.LogInfo("[MS][multi] SelectEntity ok=" + ok + "/" + _selected.Count);
+        Dbg("[MS][multi] SelectEntity ok=" + ok + "/" + _selected.Count);
         DumpState(tag);
     }
 
@@ -567,7 +572,7 @@ internal static class MultiSelect
         {
             if (_manager == null || _cursor == null)
             {
-                Log.LogInfo("[MS][multi] " + tag + ": manager/cursor null");
+                Dbg("[MS][multi] " + tag + ": manager/cursor null");
                 return;
             }
 
@@ -580,7 +585,7 @@ internal static class MultiSelect
             var cursorCount = _cursor.LevelEditorGroupSelectionItemsCount();
             var valid = SafeInvokeBool(_manager, "AreLevelEditorGroupSelectionItemsValidForPlacement");
 
-            Log.LogInfo("[MS][multi] " + tag +
+            Dbg("[MS][multi] " + tag +
                         ": raw=" + raw +
                         " count=" + count +
                         " cursorCount=" + cursorCount +
@@ -620,7 +625,7 @@ internal static class MultiSelect
     static void DumpManagerOffsets()
     {
         var mk = IL2CPP.il2cpp_object_get_class(_manager!.Pointer);
-        Log.LogInfo("[MS][multi] manager offsets _selectedEntities=" + Offset(mk, "_selectedEntities") +
+        Dbg("[MS][multi] manager offsets _selectedEntities=" + Offset(mk, "_selectedEntities") +
                     " _groupLeader=" + Offset(mk, "_groupLeader") +
                     " _bSelectionMoving=" + Offset(mk, "_bSelectionMoving") +
                     " _numInvalidChildItems=" + Offset(mk, "_numInvalidChildItems") +
@@ -637,7 +642,7 @@ internal static class MultiSelect
         }
 
         if (_watchFrames % 10 == 0)
-            Log.LogInfo("[MS][multi] watch f=" + _watchFrames +
+            Dbg("[MS][multi] watch f=" + _watchFrames +
                         " moving=" + IsMoving() +
                         " mode=" + CurrentModeName() +
                         " raw=" + RawListCount());
@@ -688,8 +693,9 @@ internal static class MultiSelect
     static bool GatePrefix(ref bool __result)
     {
         __result = true;
-        if (++_gateHits <= 3 || _gateHits % 500 == 0)
+        if (_debug && (++_gateHits <= 3 || _gateHits % 500 == 0))
             Log.LogInfo("[MS][multi] gate hit #" + _gateHits);
+        if (!_debug) ++_gateHits;
         return false;
     }
 

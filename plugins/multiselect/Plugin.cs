@@ -29,9 +29,6 @@ public class Plugin : BasePlugin
             $"{PluginName} {PluginVersion} loaded " +
             "(ithm: full interop; legacy pointer/hook wiring off by default; no native detour, no poll)");
 
-        Log.LogInfo(
-            "[MS] PlaceModeFieldPoll not started (user: no poll); GameAssembly prologue rewrite OFF; " +
-            "legacy hook path requires " + LegacyHooksEnvName + "=1");
 
         var host = HostFacade.Host;
         if (host is null || !host.Ready)
@@ -52,7 +49,7 @@ public class Plugin : BasePlugin
             return;
         }
 
-        Log.LogInfo("[MS] host ready / Kind=Interop / SharedHarmony acquired");
+        Log.LogInfo("[MS] host ready (interop + shared harmony)");
 
         if (string.Equals(
                 Environment.GetEnvironmentVariable(InteropSmoke.EnvName), "1", StringComparison.Ordinal))
@@ -63,7 +60,6 @@ public class Plugin : BasePlugin
         }
 
         Bridge = new Il2CppItemSelectionBridge(Log);
-        Log.LogInfo("[MS] Il2CppItemSelectionBridge constructed (hover wired; Task6–8 pending)");
 
         if (MultiSelect.Enabled)
         {
@@ -100,9 +96,7 @@ public class Plugin : BasePlugin
         if (!string.Equals(
                 Environment.GetEnvironmentVariable(LegacyHooksEnvName), "1", StringComparison.Ordinal))
         {
-            Log.LogInfo(
-                "[MS] legacy PlacementReadyHook/drag watch disabled (set " + LegacyHooksEnvName +
-                "=1 to arm; Harmony-on-IL2CPP is a native detour and is unsafe under Rosetta)");
+            Log.LogInfo("[MS] legacy pointer hooks off (set " + LegacyHooksEnvName + "=1 to arm)");
             return;
         }
 
