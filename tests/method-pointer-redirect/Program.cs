@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.37"), "version 0.4.37");
+        Expect(plugin.Contains("0.4.38"), "version 0.4.38");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -181,8 +181,8 @@ internal static class Program
         Expect(watch.Contains("[MS][select] arm refuse mode="), "refuses Shift arm outside select");
         Expect(watch.Contains("reason=select-only"), "names the select-only refuse");
         Expect(watch.Contains("[MS][select] arm decide mode="), "logs the arm decision");
-        Expect(watch.Contains("ResetDrag skip reason=native-crash-0.4.35"), "skips ResetDragCursorIcon");
-        Expect(!watch.Contains("ResetDragCursorIcon argc="), "does not call ResetDragCursorIcon");
+        Expect(watch.Contains("[MS][select] ResetDragCursorIcon argc="), "calls ResetDrag after a select arm");
+        Expect(!watch.Contains("ResetDrag skip reason=native-crash-0.4.35"), "does not skip ResetDrag on the select arm");
         Expect(watch.Contains("reason=finish-failed"), "refuses a second arm after PlaceItem fails");
         Expect(watch.Contains("[MS][select] PlaceItem method "), "logs the PlaceItem MethodInfo");
         Expect(watch.Contains("declaring="), "logs the declaring type");

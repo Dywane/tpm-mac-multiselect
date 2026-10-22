@@ -1,3 +1,5 @@
+Do not deploy this build. `ClearAll enter` and `ClearAll exit` both logged. The next line was `SelectEntity before i=0`, then SIGSEGV at `0x18`. There was no `SelectEntity enter count=`. The select arm had skipped `ResetDragCursorIcon`. MS 0.4.38 calls that method again after `allow=1`. See `docs/evidence/ithm-select-0.4.38.md`.
+
 # ITHM Task5 call ClearAll again before SelectEntity (MS 0.4.37)
 
 **MS:** 0.4.37

@@ -109,7 +109,6 @@ static class DragSelectWatch
     static IntPtr _clearMethod;
     static IntPtr _allowMethod;
     static bool _allowSkipLogged;
-    static bool _resetSkipLogged;
     static IntPtr _selectMethod;
     static bool _selectBoolFirst;
     static bool _groupBound;
@@ -2909,10 +2908,29 @@ static class DragSelectWatch
         var wrote = WriteFieldZero(drag, _foundationsField);
         var text = wrote ? "false" : "missing";
         Plugin.LogSrc.LogInfo("[MS][select] _openFoundationsMenuOnExit=" + text);
-        if (_resetSkipLogged)
+        if (_resetMethod == IntPtr.Zero)
+        {
+            Plugin.LogSrc.LogInfo("[MS][select] ResetDragCursorIcon missing");
             return;
-        _resetSkipLogged = true;
-        Plugin.LogSrc.LogInfo("[MS][select] ResetDrag skip reason=native-crash-0.4.35");
+        }
+
+        var exc = InvokeReset(drag);
+        Plugin.LogSrc.LogInfo(
+            "[MS][select] ResetDragCursorIcon argc=" + _resetArgs +
+            (exc == IntPtr.Zero ? "" : " exc=" + ClassName(exc)));
+    }
+
+    static unsafe IntPtr InvokeReset(IntPtr drag)
+    {
+        if (_resetArgs == 0)
+        {
+            var exc = IntPtr.Zero;
+            void** none = default;
+            IL2CPP.il2cpp_runtime_invoke(_resetMethod, drag, none, ref exc);
+            return exc;
+        }
+
+        return InvokeInt(_resetMethod, drag, 0);
     }
 
     static void PrepareExit(IntPtr drag)
