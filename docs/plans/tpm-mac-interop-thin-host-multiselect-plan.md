@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-22）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.35** 跳过会崩溃的 ClearAll，并用 BuildLogic 实例调用 Sean 的 PlaceItem argc-3。细节在 `docs/evidence/ithm-select-0.4.35.md`。
+**状态（2026-10-22）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.36** 只在 `CursorModeSelect` 上 arm，并且不调用 `ResetDragCursorIcon`。细节在 `docs/evidence/ithm-select-0.4.36.md`。
 
 **执行方：** demo建造  
 

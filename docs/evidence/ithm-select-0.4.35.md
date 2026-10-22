@@ -1,3 +1,5 @@
+Do not deploy this build. Shift press while probes showed `CursorModePlaceItem match=0` still logged `enter StartGameDragSelect` and `ResetDragCursorIcon argc=0`, then SIGSEGV at `0x409c403f5`. There was no `arm refuse`. MS 0.4.36 refuses any mode that is not `CursorModeSelect` and does not call `ResetDragCursorIcon`. See `docs/evidence/ithm-select-0.4.36.md`.
+
 # ITHM Task5 skip ClearAll and bind Sean PlaceItem (MS 0.4.35)
 
 **MS:** 0.4.35

@@ -110,6 +110,7 @@ static class DragSelectWatch
     static IntPtr _allowMethod;
     static bool _allowSkipLogged;
     static bool _clearSkipLogged;
+    static bool _resetSkipLogged;
     static IntPtr _selectMethod;
     static bool _selectBoolFirst;
     static bool _groupBound;
@@ -391,7 +392,6 @@ static class DragSelectWatch
             var mode = ReadMode(self);
             var modeName = ClassName(mode);
             var modeClass = mode == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(mode);
-            var select = IsSelectMode(modeClass, modeName);
             var armSelect = IsArmSelect(modeClass, modeName);
             if (_failArm != FailArm.Open && IsPlaceMode(mode, modeName))
             {
@@ -406,7 +406,7 @@ static class DragSelectWatch
 
             try
             {
-                MaybeProbe(modeName, modeClass, select);
+                MaybeProbe(modeName, modeClass, armSelect);
             }
             catch (Exception ex)
             {
@@ -420,10 +420,29 @@ static class DragSelectWatch
             if (_phase != Phase.Idle)
                 return;
             var edge = ShiftPressed(out var down);
+            if (edge)
+            {
+                var live = ReadMode(self);
+                var liveName = ClassName(live);
+                var liveClass = live == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(live);
+                armSelect = IsArmSelect(liveClass, liveName);
+                modeName = liveName;
+                modeClass = liveClass;
+                Plugin.LogSrc.LogInfo(
+                    "[MS][select] arm decide mode=" + modeName + " allow=" + (armSelect ? "1" : "0"));
+            }
+
             if (!edge && _failArm == FailArm.Refused && armSelect && !down && GroupClear(self))
             {
                 RestorePrompt();
                 _failArm = FailArm.Rearm;
+            }
+
+            if (edge && !armSelect)
+            {
+                Plugin.LogSrc.LogInfo(
+                    "[MS][select] arm refuse mode=" + modeName + " reason=select-only");
+                return;
             }
 
             if (edge && _failArm != FailArm.Open && !(_failArm == FailArm.Rearm && armSelect))
@@ -436,13 +455,8 @@ static class DragSelectWatch
 
             if (edge && _failArm == FailArm.Rearm && armSelect)
                 _failArm = FailArm.Open;
-            if (edge && !armSelect)
-            {
-                Plugin.LogSrc.LogInfo(
-                    "[MS][select] arm refuse mode=" + modeName + " reason=select-only");
-            }
 
-            if (down && !select)
+            if (down && !armSelect)
             {
                 if (_ignoredMode == modeName)
                     return;
@@ -769,24 +783,11 @@ static class DragSelectWatch
 
     static bool IsArmSelect(IntPtr klass, string name)
     {
-        if (klass != IntPtr.Zero && _selectClass != IntPtr.Zero && klass == _selectClass)
+        if (name == "CursorModePlaceItem" || name == "CursorModeGameDragSelect")
+            return false;
+        if (name == "CursorModeSelect")
             return true;
-        return name == "CursorModeSelect";
-    }
-
-    static bool IsSelectMode(IntPtr klass, string name)
-    {
-        if (klass != IntPtr.Zero && _selectClass != IntPtr.Zero)
-        {
-            var depth = 0;
-            for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
-            {
-                if (current == _selectClass)
-                    return true;
-            }
-        }
-
-        return name == "CursorModeSelect";
+        return klass != IntPtr.Zero && _selectClass != IntPtr.Zero && klass == _selectClass;
     }
 
     static unsafe int ReadCount(IntPtr mode)
@@ -2904,29 +2905,10 @@ static class DragSelectWatch
         var wrote = WriteFieldZero(drag, _foundationsField);
         var text = wrote ? "false" : "missing";
         Plugin.LogSrc.LogInfo("[MS][select] _openFoundationsMenuOnExit=" + text);
-        if (_resetMethod == IntPtr.Zero)
-        {
-            Plugin.LogSrc.LogInfo("[MS][select] ResetDragCursorIcon missing");
+        if (_resetSkipLogged)
             return;
-        }
-
-        var exc = InvokeReset(drag);
-        Plugin.LogSrc.LogInfo(
-            "[MS][select] ResetDragCursorIcon argc=" + _resetArgs +
-            (exc == IntPtr.Zero ? "" : " exc=" + ClassName(exc)));
-    }
-
-    static unsafe IntPtr InvokeReset(IntPtr drag)
-    {
-        if (_resetArgs == 0)
-        {
-            var exc = IntPtr.Zero;
-            void** none = default;
-            IL2CPP.il2cpp_runtime_invoke(_resetMethod, drag, none, ref exc);
-            return exc;
-        }
-
-        return InvokeInt(_resetMethod, drag, 0);
+        _resetSkipLogged = true;
+        Plugin.LogSrc.LogInfo("[MS][select] ResetDrag skip reason=native-crash-0.4.35");
     }
 
     static void PrepareExit(IntPtr drag)
