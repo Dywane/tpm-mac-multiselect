@@ -1,0 +1,11 @@
+"workshopitem"
+{
+	"appid"		"2185060"
+	"publishedfileid"		"3824484305"
+	"contentfolder"		"/Users/weidu/Documents/Project/tpm-mac-multiselect/workshop/content"
+	"previewfile"		"/Users/weidu/Documents/Project/tpm-mac-multiselect/workshop/preview.png"
+	"visibility"		"0"
+	"title"		"Multi-Select Tool for macOS (arm64)"
+	"description"		"Rectangle multi-select and group movement for Two Point Museum on Apple Silicon.\n\nHold Left Shift, drag a rectangle, release: the group follows the cursor. Left click places it, right click cancels and restores the original positions.\n\nREQUIRES THE TPM MAC LOADER (one-time install, see the linked loader item / GitHub release). macOS needs DYLD injection at launch, which a Workshop subscription cannot do by itself.\n\nNo BepInEx, no .NET runtime, and the game bundle is never modified.\n\nINSTALL\n1. Install the TPM Mac Loader and point the game's Steam launch options at its run_tpm.sh.\n2. Subscribe to this item; the loader injects libtpm_ms.dylib from the Workshop folder automatically.\n3. Launch the game and use Left Shift + drag.\n\nLogs: /tmp/tpm_ms_native.log\n\nRequires an Apple Silicon Mac and macOS 13+. Intel Macs are not supported.\n\nSource and issues: https://github.com/Dywane/tpm-mac-multiselect\n"
+	"changenote"		"1.1.0 - payload split from the loader; Steam updates are picked up automatically"
+}

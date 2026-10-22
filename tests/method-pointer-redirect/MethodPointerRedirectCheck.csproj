@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../plugins/multiselect/Hooks/MethodPointerRedirect.cs" />
+    <Compile Include="../../plugins/multiselect/Hooks/ExceptionText.cs" />
   </ItemGroup>
 </Project>

@@ -63,8 +63,24 @@
       <HintPath>$(BepInExInterop)/Il2Cppmscorlib.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Il2CppSystem.Core">
+      <HintPath>$(BepInExInterop)/Il2CppSystem.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TPS.Core">
+      <HintPath>$(BepInExInterop)/TPS.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TPS.Core.Utils">
+      <HintPath>$(BepInExInterop)/TPS.Core.Utils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="TPS.Game">
       <HintPath>$(BepInExInterop)/TPS.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(BepInExInterop)/UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">

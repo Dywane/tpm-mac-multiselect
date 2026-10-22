@@ -2,7 +2,6 @@ using System;
 using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using Il2CppInterop.Runtime.Injection;
 using TpmMacIl2CppHost;
 using TpmMacMultiselect.BuildActions;
 using TpmMacMultiselect.Hooks;
@@ -15,7 +14,9 @@ public class Plugin : BasePlugin
 {
     public const string PluginGuid = "com.tpm.mac.multiselect";
     public const string PluginName = "TPM Mac Multi-Select";
-    public const string PluginVersion = "0.4.12";
+    public const string PluginVersion = "0.4.41";
+
+    public const string LegacyHooksEnvName = "TPM_MS_LEGACY_HOOKS";
 
     internal static ManualLogSource LogSrc = null!;
 
@@ -26,11 +27,8 @@ public class Plugin : BasePlugin
         LogSrc = Log;
         Log.LogInfo(
             $"{PluginName} {PluginVersion} loaded " +
-            "(ithm: method-pointer enter; hover field read; prologue rewrite OFF; poll retired)");
+            "(ithm: full interop; legacy pointer/hook wiring off by default; no native detour, no poll)");
 
-        Log.LogInfo(
-            "[MS] PlaceModeFieldPoll not started (user: no poll); " +
-            "GameAssembly prologue rewrite OFF; primary = OnBecomeActive method-pointer swap");
 
         var host = HostFacade.Host;
         if (host is null || !host.Ready)
@@ -51,10 +49,56 @@ public class Plugin : BasePlugin
             return;
         }
 
-        Log.LogInfo("[MS] host ready / Kind=Interop / SharedHarmony acquired");
+        Log.LogInfo("[MS] host ready (interop + shared harmony)");
+
+        if (string.Equals(
+                Environment.GetEnvironmentVariable(InteropSmoke.EnvName), "1", StringComparison.Ordinal))
+        {
+            InteropSmoke.Run(Log);
+            Log.LogInfo("[MS] smoke mode: gameplay disabled for this session");
+            return;
+        }
 
         Bridge = new Il2CppItemSelectionBridge(Log);
-        Log.LogInfo("[MS] Il2CppItemSelectionBridge constructed (hover wired; Task6–8 pending)");
+
+        if (MultiSelect.Enabled)
+        {
+            try
+            {
+                MultiSelect.Apply(HostFacade.Host!.SharedHarmony!);
+            }
+            catch (Exception ex)
+            {
+                Log.LogError("[MS] MultiSelect.Apply failed: " + ExceptionText.Format(ex));
+            }
+
+            return;
+        }
+
+        if (MultiSelectProbe.Enabled)
+        {
+            try
+            {
+                MultiSelectProbe.Apply(HostFacade.Host!.SharedHarmony!);
+            }
+            catch (Exception ex)
+            {
+                Log.LogError("[MS] MultiSelectProbe.Apply failed: " + ExceptionText.Format(ex));
+            }
+
+            return;
+        }
+
+        // 2026-10-22: with the full interop the OnBecomeActive wrapper now exists, so the old
+        // PlacementReadyHook would take the managed-Harmony path — which BepInEx implements as a
+        // native detour of the GameAssembly body. That killed the process (SIGBUS) under Rosetta.
+        // Legacy pointer/hook wiring is therefore opt-in until it is replaced with typed calls.
+        if (!string.Equals(
+                Environment.GetEnvironmentVariable(LegacyHooksEnvName), "1", StringComparison.Ordinal))
+        {
+            Log.LogInfo("[MS] legacy pointer hooks off (set " + LegacyHooksEnvName + "=1 to arm)");
+            return;
+        }
 
         try
         {
@@ -65,18 +109,7 @@ public class Plugin : BasePlugin
         }
         catch (Exception ex)
         {
-            Log.LogError($"[MS] PlacementReadyHook.Apply failed: {ex.GetType().Name}: {ex.Message}");
-        }
-
-        try
-        {
-            ClassInjector.RegisterTypeInIl2Cpp<HoverWatch>();
-            AddComponent<HoverWatch>();
-            Log.LogInfo("[MS][hover] HoverWatch armed (samples after PLACEMENT_READY)");
-        }
-        catch (Exception ex)
-        {
-            Log.LogError($"[MS][hover] HoverWatch failed: {ex.GetType().Name}: {ex.Message}");
+            Log.LogError($"[MS] PlacementReadyHook.Apply failed: {ExceptionText.Format(ex)}");
         }
     }
 }

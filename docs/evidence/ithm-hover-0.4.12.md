@@ -1,5 +1,7 @@
 # ITHM Task5 hover read (MS 0.4.12)
 
+Superseded by `docs/evidence/ithm-hover-0.4.13.md`. The Mac log at 2026-10-21 11:09 (MS 0.4.12) recorded `[MS][hover] HoverWatch failed: TypeInitializationException: The type initializer for 'Il2CppInterop.Runtime.Injection.InjectorHelpers' threw an exception.` before Chainloader complete and before `PLACEMENT_READY`. Do not redeploy this build to retest hover.
+
 **Result of this change:** code compiles. The build machine still has to capture a live HIT.
 **MS:** 0.4.12
 **Host:** 0.4.0. Do not replace the Host DLL from this change.
