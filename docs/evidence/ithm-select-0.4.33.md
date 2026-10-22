@@ -1,3 +1,5 @@
+Do not deploy this build. The select-only gate held, and the first Shift ran from `CursorModeSelect`. Finish wrote `dragMode=0`, called `PlaceItem this=<non-null> argc=3`, and stayed in `CursorModeSelect`. `b__76_0` then opened the delete dialog. The next Shift reached `ResetDragCursorIcon` and SIGSEGV at `0x4094f748d` (`GameAssembly+0x2e9548`). The arm line was still `place=static/0`. MS 0.4.34 binds the instance PlaceItem method and refuses another arm after that failure. See `docs/evidence/ithm-select-0.4.34.md`.
+
 # ITHM Task5 refuse Shift unless CursorModeSelect (MS 0.4.33)
 
 **MS:** 0.4.33

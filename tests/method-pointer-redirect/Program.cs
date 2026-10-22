@@ -160,7 +160,7 @@ internal static class Program
         Expect(!plugin.Contains("AddComponent"), "Plugin has no AddComponent");
         Expect(!plugin.Contains("HoverWatch"), "Plugin has no HoverWatch");
         Expect(!plugin.Contains("il2cpp_runtime_invoke"), "load does not invoke");
-        Expect(plugin.Contains("0.4.33"), "version 0.4.33");
+        Expect(plugin.Contains("0.4.34"), "version 0.4.34");
         Expect(plugin.Contains("hover hooks removed"), "load log drops hover");
         Expect(File.Exists(watchPath), "DragSelectWatch.cs exists");
         var watch = File.Exists(watchPath) ? File.ReadAllText(watchPath) : "";
@@ -180,6 +180,14 @@ internal static class Program
         Expect(watch.Contains("shift true mode="), "logs shift when the mode is not select");
         Expect(watch.Contains("[MS][select] arm refuse mode="), "refuses Shift arm outside select");
         Expect(watch.Contains("reason=select-only"), "names the select-only refuse");
+        Expect(watch.Contains("reason=finish-failed"), "refuses a second arm after PlaceItem fails");
+        Expect(watch.Contains("[MS][select] PlaceItem method "), "logs the PlaceItem MethodInfo");
+        Expect(watch.Contains("declaring="), "logs the declaring type");
+        Expect(watch.Contains("group count when="), "logs the group count around CancelBuild");
+        Expect(watch.Contains("leader class="), "logs the leader class");
+        Expect(watch.Contains("group emptied by CancelBuild"), "stops PlaceItem when CancelBuild clears the group");
+        Expect(watch.Contains("LevelEditorGroupSelectionItemsCount"), "names the group count method");
+        Expect(watch.Contains("GameItemInstance"), "names the SeanB item type");
         Expect(watch.Contains("CursorModeSelect"), "names the select mode");
         Expect(watch.Contains("staticFields="), "arm miss lists static fields");
         Expect(!watch.Contains("BuildLogic.<Instance>k__BackingField missing"), "does not abort on the Win backing field");

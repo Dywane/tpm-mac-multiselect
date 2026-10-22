@@ -32,6 +32,14 @@ static class DragSelectWatch
         Dragging
     }
 
+    enum FailArm
+    {
+        Open,
+        Failed,
+        Refused,
+        Rearm
+    }
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     delegate void ZeroArgInstance(IntPtr self, IntPtr methodInfo);
 
@@ -133,6 +141,10 @@ static class DragSelectWatch
     static IntPtr _foundationsField;
     static bool _suppressUntilPlace;
     static bool _finishBlocked;
+    static FailArm _failArm;
+    static IntPtr _countMethod;
+    static IntPtr _itemClass;
+    static bool _itemTypeMiss;
     static IntPtr _resetMethod;
     static int _resetArgs = -1;
     static IntPtr _cancelMethod;
@@ -380,6 +392,12 @@ static class DragSelectWatch
             var modeClass = mode == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_object_get_class(mode);
             var select = IsSelectMode(modeClass, modeName);
             var armSelect = IsArmSelect(modeClass, modeName);
+            if (_failArm != FailArm.Open && IsPlaceMode(mode, modeName))
+            {
+                _failArm = FailArm.Open;
+                RestorePrompt();
+            }
+
             if (_phase != Phase.Idle || IsDragMode(mode, modeName))
                 WatchDrag(self, mode, modeName);
             else if (_promptInstalled)
@@ -401,6 +419,22 @@ static class DragSelectWatch
             if (_phase != Phase.Idle)
                 return;
             var edge = ShiftPressed(out var down);
+            if (!edge && _failArm == FailArm.Refused && armSelect && !down && GroupClear(self))
+            {
+                RestorePrompt();
+                _failArm = FailArm.Rearm;
+            }
+
+            if (edge && _failArm != FailArm.Open && !(_failArm == FailArm.Rearm && armSelect))
+            {
+                _failArm = FailArm.Refused;
+                Plugin.LogSrc.LogInfo(
+                    "[MS][select] arm refuse mode=" + modeName + " reason=finish-failed");
+                return;
+            }
+
+            if (edge && _failArm == FailArm.Rearm && armSelect)
+                _failArm = FailArm.Open;
             if (edge && !armSelect)
             {
                 Plugin.LogSrc.LogInfo(
@@ -508,20 +542,52 @@ static class DragSelectWatch
             }
 
             PrepareExit(drag);
+            LogGroup(mgr, "before-CancelBuild");
             InvokeCancelBuild();
+            var afterCount = GroupCount(mgr);
+            LogGroup(mgr, "after-CancelBuild");
             var placed = false;
-            if (leader == IntPtr.Zero)
-                Plugin.LogSrc.LogInfo("[MS][select] PlaceItem skipped empty");
-            else
-                placed = PlaceLeader(cursor, leader);
-            if (placed)
-                RestorePrompt();
-            else if (leader != IntPtr.Zero)
+            var failed = false;
+            if (leader != IntPtr.Zero)
+                Plugin.LogSrc.LogInfo("[MS][select] leader class=" + ClassName(leader));
+            if (leader != IntPtr.Zero && afterCount == 0)
             {
-                var failedMode = ClassName(ReadMode(cursor));
-                Plugin.LogSrc.LogError("[MS][select] ERROR mode=" + failedMode + " after PlaceItem");
+                Plugin.LogSrc.LogError("[MS][select] ERROR group emptied by CancelBuild");
                 if (mgr != IntPtr.Zero)
                     InvokeClear(mgr);
+                failed = true;
+            }
+            else if (leader == IntPtr.Zero)
+            {
+                Plugin.LogSrc.LogInfo("[MS][select] PlaceItem skipped empty");
+                if (_itemTypeMiss)
+                {
+                    _itemTypeMiss = false;
+                    failed = true;
+                }
+            }
+            else
+            {
+                LogGroup(mgr, "before-PlaceItem");
+                placed = PlaceLeader(cursor, leader);
+            }
+
+            if (placed)
+            {
+                _failArm = FailArm.Open;
+                RestorePrompt();
+            }
+            else if (failed || leader != IntPtr.Zero)
+            {
+                if (!failed)
+                {
+                    var failedMode = ClassName(ReadMode(cursor));
+                    Plugin.LogSrc.LogError("[MS][select] ERROR mode=" + failedMode + " after PlaceItem");
+                    if (mgr != IntPtr.Zero)
+                        InvokeClear(mgr);
+                }
+
+                _failArm = FailArm.Failed;
                 _finishBlocked = true;
             }
             else if (!IsDragMode(ReadMode(cursor), ClassName(ReadMode(cursor))))
@@ -546,6 +612,13 @@ static class DragSelectWatch
         {
             Plugin.LogSrc.LogInfo(
                 "[MS][select] arm refuse mode=" + liveName + " reason=select-only");
+            return;
+        }
+
+        if (_failArm != FailArm.Open)
+        {
+            Plugin.LogSrc.LogInfo(
+                "[MS][select] arm refuse mode=" + liveName + " reason=finish-failed");
             return;
         }
 
@@ -2038,6 +2111,8 @@ static class DragSelectWatch
 
         Plugin.LogSrc.LogInfo("[MS][select] snapshot copied=" + copied + " via=" + via + " before ClearAll");
         var chosen = FilterStructural(use, copied, out var filtered);
+        if (filtered > 0)
+            chosen = TakeGameItems(chosen, ref filtered);
         mgr = ReadManager(cursor);
         if (mgr == IntPtr.Zero)
         {
@@ -2402,6 +2477,7 @@ static class DragSelectWatch
             return _selectMethod != IntPtr.Zero;
         _groupBound = true;
         var klass = IL2CPP.il2cpp_object_get_class(mgr);
+        _countMethod = FindInstanceZeroArg(klass, "LevelEditorGroupSelectionItemsCount");
         _clearMethod = FindInstanceZeroArg(klass, "ClearAllSelectedEntities");
         _allowMethod = FindInstanceArgc(klass, "IsGroupSelectionAllowedForEntity", 1);
         if (!TryFindSelect(klass, out _selectMethod, out _selectBoolFirst, out var paramText))
@@ -2412,6 +2488,7 @@ static class DragSelectWatch
 
         _groupWhy = "params=" + paramText +
                     " ClearAll=" + (_clearMethod != IntPtr.Zero ? "yes" : "missing") +
+                    " count=" + (_countMethod != IntPtr.Zero ? "yes" : "missing") +
                     " allow=" + (_allowMethod != IntPtr.Zero ? "yes" : "missing");
         Plugin.LogSrc.LogInfo("[MS][select] " + _groupWhy);
         return true;
@@ -2636,6 +2713,12 @@ static class DragSelectWatch
         _placeMethod = IntPtr.Zero;
         _placeStatic = false;
         _placeObjectSlot = -1;
+        if (_itemClass == IntPtr.Zero)
+            _itemClass = FindClass("TPS.Game", "GameItemInstance");
+        var logged = 0;
+        var best = IntPtr.Zero;
+        var bestScore = 0;
+        var bestSlot = -1;
         var depth = 0;
         for (var current = build; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
         {
@@ -2649,54 +2732,130 @@ static class DragSelectWatch
                     continue;
                 if (!(IL2CPP.il2cpp_method_get_name_(method) ?? "").Equals("PlaceItem", StringComparison.Ordinal))
                     continue;
+                if (logged < 8)
+                {
+                    logged++;
+                    Plugin.LogSrc.LogInfo("[MS][select] PlaceItem candidate " + MethodSig(method));
+                }
+
+                if (!IL2CPP.il2cpp_method_is_instance(method))
+                    continue;
                 if (IL2CPP.il2cpp_method_get_param_count(method) != 3)
                     continue;
-                if (!TryPlaceShape(method, out var objectSlot))
+                if (!ScorePlace(method, out var objectSlot, out var score))
                     continue;
-                if (IL2CPP.il2cpp_method_is_instance(method))
-                {
-                    if (_placeMethod != IntPtr.Zero && !_placeStatic)
-                    {
-                        _placeMethod = IntPtr.Zero;
-                        _placeObjectSlot = -1;
-                        return;
-                    }
-
-                    _placeMethod = method;
-                    _placeObjectSlot = objectSlot;
-                    _placeStatic = false;
-                }
-                else if (_placeMethod == IntPtr.Zero)
-                {
-                    _placeMethod = method;
-                    _placeObjectSlot = objectSlot;
-                    _placeStatic = true;
-                }
+                if (score <= bestScore)
+                    continue;
+                best = method;
+                bestScore = score;
+                bestSlot = objectSlot;
             }
-
-            if (_placeMethod != IntPtr.Zero && !_placeStatic)
-                return;
         }
+
+        var sean = FindSeanPlace(build);
+        Plugin.LogSrc.LogInfo("[MS][select] PlaceItem sean " + MethodSig(sean));
+        if (sean != IntPtr.Zero &&
+            IL2CPP.il2cpp_method_is_instance(sean) &&
+            IL2CPP.il2cpp_method_get_param_count(sean) == 3 &&
+            ScorePlace(sean, out var seanSlot, out _))
+        {
+            best = sean;
+            bestSlot = seanSlot;
+        }
+
+        if (best == IntPtr.Zero)
+        {
+            Plugin.LogSrc.LogInfo("[MS][select] PlaceItem method " + MethodSig(IntPtr.Zero));
+            return;
+        }
+
+        _placeMethod = best;
+        _placeObjectSlot = bestSlot;
+        _placeStatic = false;
+        Plugin.LogSrc.LogInfo("[MS][select] PlaceItem method " + MethodSig(best));
     }
 
-    static bool TryPlaceShape(IntPtr method, out int objectSlot)
+    static IntPtr FindSeanPlace(IntPtr build)
+    {
+        var depth = 0;
+        for (var current = build; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var method = IL2CPP.il2cpp_class_get_method_from_name(current, "PlaceItem", 3);
+            if (method != IntPtr.Zero)
+                return method;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    static bool ScorePlace(IntPtr method, out int objectSlot, out int score)
     {
         objectSlot = -1;
+        score = 0;
         var bools = 0;
+        var refs = 0;
         for (uint i = 0; i < 3; i++)
         {
-            if (IsBoolType(IL2CPP.il2cpp_method_get_param(method, i)))
+            var type = IL2CPP.il2cpp_method_get_param(method, i);
+            if (IsBoolType(type))
             {
                 bools++;
                 continue;
             }
 
-            if (objectSlot >= 0)
-                return false;
+            if (!IsRefParam(type))
+                continue;
+            refs++;
             objectSlot = (int)i;
         }
 
-        return bools == 2 && objectSlot >= 0;
+        if (refs != 1)
+            return false;
+        score = 1;
+        if (bools == 2)
+            score += 2;
+        if (objectSlot == 0)
+            score += 4;
+        if (ParamFitsItem(IL2CPP.il2cpp_method_get_param(method, (uint)objectSlot)))
+            score += 8;
+        return true;
+    }
+
+    static bool IsRefParam(IntPtr type)
+    {
+        if (type == IntPtr.Zero)
+            return false;
+        var klass = IL2CPP.il2cpp_class_from_type(type);
+        if (klass == IntPtr.Zero)
+            return false;
+        return !IL2CPP.il2cpp_class_is_valuetype(klass);
+    }
+
+    static bool ParamFitsItem(IntPtr type)
+    {
+        var klass = type == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_class_from_type(type);
+        if (klass == IntPtr.Zero || IL2CPP.il2cpp_class_is_valuetype(klass))
+            return false;
+        if (_itemClass != IntPtr.Zero && IL2CPP.il2cpp_class_is_assignable_from(klass, _itemClass))
+            return true;
+        var name = IL2CPP.il2cpp_class_get_name_(klass) ?? "";
+        return name == "GameItemInstance" || name == "ManagedEntity";
+    }
+
+    static string MethodSig(IntPtr method)
+    {
+        if (method == IntPtr.Zero)
+            return "declaring=missing name=missing static=1 argc=0 params=missing";
+        var decl = IL2CPP.il2cpp_method_get_declaring_type(method);
+        var ns = decl == IntPtr.Zero ? "" : IL2CPP.il2cpp_class_get_namespace_(decl) ?? "";
+        var typeName = decl == IntPtr.Zero ? "?" : IL2CPP.il2cpp_class_get_name_(decl) ?? "?";
+        var declaring = ns.Length == 0 ? typeName : ns + "." + typeName;
+        var stat = IL2CPP.il2cpp_method_is_instance(method) ? "0" : "1";
+        return "declaring=" + declaring +
+               " name=" + (IL2CPP.il2cpp_method_get_name_(method) ?? "?") +
+               " static=" + stat +
+               " argc=" + IL2CPP.il2cpp_method_get_param_count(method) +
+               " params=" + ParamList(method);
     }
 
     static IntPtr FindBoolArg(IntPtr klass, string methodName, bool wantStatic)
@@ -2747,6 +2906,8 @@ static class DragSelectWatch
 
     static void NoteDragEntered(IntPtr drag)
     {
+        if (_failArm != FailArm.Open)
+            return;
         var wrote = WriteFieldZero(drag, _foundationsField);
         var text = wrote ? "false" : "missing";
         Plugin.LogSrc.LogInfo("[MS][select] _openFoundationsMenuOnExit=" + text);
@@ -2830,6 +2991,31 @@ static class DragSelectWatch
         return true;
     }
 
+    static void LogGroup(IntPtr mgr, string when)
+    {
+        var count = GroupCount(mgr);
+        Plugin.LogSrc.LogInfo(
+            "[MS][select] group count when=" + when + " count=" + (count < 0 ? "missing" : count.ToString()));
+    }
+
+    static unsafe int GroupCount(IntPtr mgr)
+    {
+        if (mgr == IntPtr.Zero || _countMethod == IntPtr.Zero)
+            return -1;
+        var exc = IntPtr.Zero;
+        void** none = default;
+        var ret = IL2CPP.il2cpp_runtime_invoke(_countMethod, mgr, none, ref exc);
+        if (exc != IntPtr.Zero || ret == IntPtr.Zero)
+            return -1;
+        return Marshal.ReadInt32(IL2CPP.il2cpp_object_unbox(ret));
+    }
+
+    static bool GroupClear(IntPtr cursor)
+    {
+        var count = GroupCount(ReadManager(cursor));
+        return count <= 0;
+    }
+
     static void InvokeCancelBuild()
     {
         if (_cancelMethod == IntPtr.Zero)
@@ -2859,6 +3045,7 @@ static class DragSelectWatch
         var leaderText = leader.ToInt64().ToString("X");
         var build = ReadBuildInstance();
         var thisText = build == IntPtr.Zero ? "null" : build.ToInt64().ToString("X");
+        Plugin.LogSrc.LogInfo("[MS][select] PlaceItem method " + MethodSig(_placeMethod));
         Plugin.LogSrc.LogInfo("[MS][select] PlaceItem this=" + thisText + " argc=3");
         if (_placeMethod == IntPtr.Zero || _placeObjectSlot < 0 || build == IntPtr.Zero)
         {
@@ -3032,6 +3219,121 @@ static class DragSelectWatch
         _gateInstalled = false;
         _gateSlotCount = 0;
         Plugin.LogSrc.LogInfo("[MS][select] gate override off");
+    }
+
+    static IntPtr[] TakeGameItems(IntPtr[] use, ref int filtered)
+    {
+        if (_itemClass == IntPtr.Zero)
+            _itemClass = FindClass("TPS.Game", "GameItemInstance");
+        var sample = "none";
+        var next = new IntPtr[filtered];
+        var kept = 0;
+        var unwrapped = 0;
+        var dropped = 0;
+        for (var i = 0; i < filtered; i++)
+        {
+            var obj = use[i];
+            if (obj == IntPtr.Zero)
+            {
+                dropped++;
+                continue;
+            }
+
+            if (sample == "none")
+                sample = ClassName(obj);
+            var klass = IL2CPP.il2cpp_object_get_class(obj);
+            if (IsGameItemClass(klass))
+            {
+                next[kept++] = obj;
+                continue;
+            }
+
+            var inner = FindItemField(obj, klass);
+            if (inner != IntPtr.Zero)
+            {
+                next[kept++] = inner;
+                unwrapped++;
+                continue;
+            }
+
+            dropped++;
+        }
+
+        Plugin.LogSrc.LogInfo(
+            "[MS][select] item filter class=" + sample +
+            " kept=" + kept +
+            " unwrapped=" + unwrapped +
+            " dropped=" + dropped);
+        if (kept > 0)
+        {
+            filtered = kept;
+            return next;
+        }
+
+        if (_itemClass == IntPtr.Zero)
+            return use;
+        _itemTypeMiss = true;
+        Plugin.LogSrc.LogInfo("[MS][select] leader class=" + sample);
+        Plugin.LogSrc.LogError("[MS][select] ERROR item=not-GameItemInstance");
+        filtered = 0;
+        return next;
+    }
+
+    static bool IsGameItemClass(IntPtr klass)
+    {
+        if (klass == IntPtr.Zero)
+            return false;
+        if (_itemClass != IntPtr.Zero &&
+            (klass == _itemClass || IL2CPP.il2cpp_class_is_assignable_from(_itemClass, klass)))
+            return true;
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 8; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            if ((IL2CPP.il2cpp_class_get_name_(current) ?? "") == "GameItemInstance")
+                return true;
+        }
+
+        return false;
+    }
+
+    static IntPtr FindItemField(IntPtr obj, IntPtr klass)
+    {
+        if (obj == IntPtr.Zero || klass == IntPtr.Zero || _itemClass == IntPtr.Zero)
+            return IntPtr.Zero;
+        var found = IntPtr.Zero;
+        var hits = 0;
+        var depth = 0;
+        for (var current = klass; current != IntPtr.Zero && depth < 6; current = IL2CPP.il2cpp_class_get_parent(current), depth++)
+        {
+            var iter = IntPtr.Zero;
+            while (hits < 2)
+            {
+                var field = IL2CPP.il2cpp_class_get_fields(current, ref iter);
+                if (field == IntPtr.Zero)
+                    break;
+                if ((IL2CPP.il2cpp_field_get_flags(field) & FieldStatic) != 0)
+                    continue;
+                var type = IL2CPP.il2cpp_field_get_type(field);
+                var typeClass = type == IntPtr.Zero ? IntPtr.Zero : IL2CPP.il2cpp_class_from_type(type);
+                if (typeClass == IntPtr.Zero || IL2CPP.il2cpp_class_is_valuetype(typeClass))
+                    continue;
+                var typeName = IL2CPP.il2cpp_class_get_name_(typeClass) ?? "";
+                var canHold = typeName == "GameItemInstance" ||
+                              IL2CPP.il2cpp_class_is_assignable_from(typeClass, _itemClass);
+                if (!canHold)
+                    continue;
+                var offset = unchecked((int)IL2CPP.il2cpp_field_get_offset(field));
+                if (offset < MinInstanceOffset)
+                    continue;
+                var ptr = Marshal.ReadIntPtr(obj, offset);
+                if (ptr == IntPtr.Zero || !IsGameItemClass(IL2CPP.il2cpp_object_get_class(ptr)))
+                    continue;
+                found = ptr;
+                hits++;
+            }
+        }
+
+        return hits == 1 ? found : IntPtr.Zero;
     }
 
     static IntPtr[] FilterStructural(IntPtr[] use, int copied, out int filtered)

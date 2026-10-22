@@ -545,7 +545,7 @@ git commit -m "feat(ms): Task4 placement-ready Harmony hook (no blind poll gate)
 
 ## Task 5: hover
 
-**状态（2026-10-21）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.33** 拒绝非 `CursorModeSelect` 的 Shift arm。PlaceItem 仍用 BuildLogic 实例，prompt 仍保持到 `CursorModePlaceItem`。细节在 `docs/evidence/ithm-select-0.4.33.md`。
+**状态（2026-10-22）：** Task5 HIT 在 MS 0.4.26 通过。MS **0.4.34** 绑定实例 `PlaceItem`，并在 PlaceItem 失败后拒绝再次 arm。细节在 `docs/evidence/ithm-select-0.4.34.md`。
 
 **执行方：** demo建造  
 
