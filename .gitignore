@@ -16,3 +16,4 @@ plugins/**/obj/
 plugins/mac-il2cpp-host
 native/build/
 native/lib/
+native/dist/

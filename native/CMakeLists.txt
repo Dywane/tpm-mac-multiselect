@@ -11,7 +11,7 @@ find_library(DOBBY_LIB dobby PATHS ${CMAKE_SOURCE_DIR}/lib NO_DEFAULT_PATH)
 if(NOT DOBBY_LIB)
     set(DOBBY_LIB ${CMAKE_SOURCE_DIR}/lib/libdobby.dylib)
 endif()
-target_link_libraries(tpm_ms PRIVATE ${DOBBY_LIB})
+target_link_libraries(tpm_ms PRIVATE ${DOBBY_LIB} "-framework Carbon")
 set_target_properties(tpm_ms PROPERTIES
     BUILD_RPATH "@loader_path"
     INSTALL_RPATH "@loader_path")
