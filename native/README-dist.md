@@ -13,6 +13,8 @@ This archive contains only the mod payload (`libtpm_ms.dylib`). It is loaded by 
 2. Put `libtpm_ms.dylib` into `<loader>/mods/`,
    or subscribe to the Workshop item (Steam downloads it and the loader picks it up).
 
+Workshop item: <https://steamcommunity.com/sharedfiles/filedetails/?id=3824484305>
+
 ## Use
 
 | Action | Result |

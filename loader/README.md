@@ -10,6 +10,10 @@ Launches Two Point Museum with every macOS mod dylib injected. One loader for al
    "/Users/you/Applications/tpm-mac-loader/run_tpm.sh" %command%
    ```
 
+## Known Workshop mods
+
+- Multi-Select: <https://steamcommunity.com/sharedfiles/filedetails/?id=3824484305>
+
 ## Add mods
 
 - **Workshop**: subscribe. Steam downloads the item to
